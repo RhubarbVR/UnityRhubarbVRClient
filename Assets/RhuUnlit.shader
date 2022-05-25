@@ -1,7 +1,7 @@
 Shader "Unlit/RhuUnlit" {
 	Properties{
 		_MainTex("Base (RGB) Trans (A)", 2D) = "white" {}
-		_Tint("Tint", Color) = (1.0, 1.0, 1.0, 1.0)
+		_Color("Tint", Color) = (0.0, 0.0, 1.0, 1.0)
 		_Alpha("Alpha ratio", Float) = 1.0
 	}
 
@@ -33,21 +33,23 @@ Shader "Unlit/RhuUnlit" {
 
 						sampler2D _MainTex;
 						float4 _MainTex_ST;
-						float4 _Tint;
+						float4 _Color;
 						float _Alpha;
 
 						v2f vert(appdata_t v)
 						{
 							v2f o;
 							o.vertex = UnityObjectToClipPos(v.vertex);
-							o.texcoord = TRANSFORM_TEX(v.texcoord, _MainTex);
+							float2 flip = v.texcoord;
+							flip.y = -flip.y;
+							o.texcoord = TRANSFORM_TEX(flip, _MainTex);
 							UNITY_TRANSFER_FOG(o,o.vertex);
 							return o;
 						}
 
 						fixed4 frag(v2f i) : SV_Target
 						{
-							fixed4 col = tex2D(_MainTex, i.texcoord) * _Tint;
+							fixed4 col = tex2D(_MainTex, i.texcoord) * _Color;
 							col.a = col.a * _Alpha;
 							UNITY_APPLY_FOG(i.fogCoord, col);
 							return col;

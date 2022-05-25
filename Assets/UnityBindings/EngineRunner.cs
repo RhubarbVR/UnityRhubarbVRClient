@@ -261,10 +261,12 @@ public class EngineRunner : MonoBehaviour
         });
     }
 
+    public float speedMultply = 200f;
+
     void Update()
     {
         MainThreadUpdate();
-        var sens = 100f * Time.deltaTime;
+        var sens = speedMultply * Time.deltaTime;
         MouseDelta = new Vector2f(Input.GetAxis("Mouse X") * sens, -Input.GetAxis("Mouse Y") * sens);
         foreach (var item in tempmeshes)
         {

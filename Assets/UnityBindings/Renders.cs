@@ -118,7 +118,7 @@ public class UnityMeshRender : RenderLinkBase<MeshRender>
                 var color = RenderingComponent.colorLinear.Value;
                 if (materials[i] is not null)
                 {
-                    materials[i].SetColor(RMaterial.MainColor, new Color(color.r, color.g, color.b, color.a));
+                    materials[i].color = new Color(color.r, color.g, color.b, color.a);
                 }
             }
         });
@@ -139,8 +139,7 @@ public class UnityMeshRender : RenderLinkBase<MeshRender>
                 {
                     materials[i] = new Material((Material)RenderingComponent.materials[i].Asset?.Target);
                     var color = RenderingComponent.colorLinear.Value;
-                    materials[i].SetColor(RMaterial.MainColor, new Color(color.r, color.g, color.b, color.a));
-
+                    materials[i].color = new Color(color.r, color.g, color.b, color.a);
                 }
                 catch { }
             }

@@ -319,8 +319,8 @@ Camera:
     y: 0
     width: 1
     height: 1
-  near clip plane: 0.3
-  far clip plane: 1000
+  near clip plane: 0.01
+  far clip plane: 800
   field of view: 60
   orthographic: 0
   orthographic size: 5
@@ -744,3 +744,4 @@ MonoBehaviour:
   PBR: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
   PBRClip: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
   isVR: 0
+  speedMultply: 500
