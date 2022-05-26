@@ -98,15 +98,17 @@ public class UnityMesh : IRMesh
             }
         }
 
-        mesh.vertices = vertices;
+        mesh.SetTriangles(Array.Empty<int>(), 0);
 
-        mesh.normals = normals;
+        mesh.SetVertices(vertices);
 
-        mesh.uv = uv;
+        mesh.SetNormals(normals);
 
-        mesh.colors = colors;
+        mesh.SetUVs(0, uv);
 
-        mesh.triangles = rmesh.RenderIndices().ToArray();
+        mesh.SetColors(colors);
+
+        mesh.SetTriangles(rmesh.RenderIndices().ToArray(),0);
 
         mesh.RecalculateBounds();
     }
