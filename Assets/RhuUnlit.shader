@@ -7,8 +7,8 @@ Shader "Unlit/RhuUnlit" {
 
 		SubShader{
 				Tags {"Queue" = "Transparent" "IgnoreProjector" = "True" "RenderType" = "Transparent"}
-				LOD 100
-				ZWrite Off
+				LOD 200
+				ZWrite On
 				Blend SrcAlpha OneMinusSrcAlpha
 
 				Pass {
