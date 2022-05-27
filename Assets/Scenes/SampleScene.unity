@@ -124,6 +124,227 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &488119152
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 488119154}
+  - component: {fileID: 488119153}
+  - component: {fileID: 488119158}
+  - component: {fileID: 488119157}
+  - component: {fileID: 488119156}
+  - component: {fileID: 488119163}
+  m_Layer: 0
+  m_Name: Fonts
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &488119153
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 488119152}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bc6e18b102766f3409b8f755500078a8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Black: {fileID: 12800000, guid: 6896e6d3d10714f4c92acfe36e9d56ea, type: 3}
+  BlackItalic: {fileID: 12800000, guid: 9a0f27ca4ecdbea4998becc835e5cb96, type: 3}
+  Bold: {fileID: 12800000, guid: 55f6143ad6471ea438a6b4ba5e9b9ba7, type: 3}
+  BoldItalic: {fileID: 12800000, guid: b5cf21d4cfc58ea43af94535d28fe9cb, type: 3}
+  ExtraBold: {fileID: 12800000, guid: 143f5e53919e86c4da8afe0cf41b8cde, type: 3}
+  ExtraBoldItalic: {fileID: 12800000, guid: fba5b2d64730ad846b3b670654b3bc63, type: 3}
+  ExtraLight: {fileID: 12800000, guid: a6ddf208bdd86814b9cd8bf5180bab73, type: 3}
+  ExtraLightItalic: {fileID: 12800000, guid: 466f08f0a6cee874cab28145a21acd66, type: 3}
+  Italic: {fileID: 12800000, guid: f37d6fd6f106cc64a961cc83e0ce06eb, type: 3}
+  Light: {fileID: 12800000, guid: 2c6c1ca70e01586448b1d978fbf76562, type: 3}
+  LightItalic: {fileID: 12800000, guid: bd3db6aa79d4f894ca0bf186b4c87d2e, type: 3}
+  Medium: {fileID: 12800000, guid: 0754e801a62f70c4c9b843c26ff0a4c8, type: 3}
+  MediumItalic: {fileID: 12800000, guid: 132a204ad6af25b41af0111273a58b9e, type: 3}
+  Regular: {fileID: 12800000, guid: 98476263df633b647808a1aadcadfd14, type: 3}
+  SemiBold: {fileID: 12800000, guid: 77817cc332649084c89ee3a6f005769a, type: 3}
+  SemiBoldItalic: {fileID: 12800000, guid: 17f1f7cf794a6be419916eaa6cd64f35, type: 3}
+  Thin: {fileID: 12800000, guid: d95b24b4bbab98e46b1880b83a108ca2, type: 3}
+  ThinItalic: {fileID: 12800000, guid: b59f2ce2ae9e795418560e6f3702842d, type: 3}
+  Oblique: {fileID: 0}
+  Strikeout: {fileID: 0}
+  Underline: {fileID: 0}
+  UnderlineItalic: {fileID: 0}
+  UnderlineBold: {fileID: 0}
+  UnderlineLight: {fileID: 0}
+  UnderlineLightItalic: {fileID: 0}
+--- !u!4 &488119154
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 488119152}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.36131275, y: 2.050265, z: -1.32142}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &488119156
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 488119152}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bc6e18b102766f3409b8f755500078a8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Black: {fileID: 0}
+  BlackItalic: {fileID: 0}
+  Bold: {fileID: 12800000, guid: 679c3f7cfa0b9b24c8670898a3c2578a, type: 3}
+  BoldItalic: {fileID: 0}
+  ExtraBold: {fileID: 0}
+  ExtraBoldItalic: {fileID: 0}
+  ExtraLight: {fileID: 0}
+  ExtraLightItalic: {fileID: 0}
+  Italic: {fileID: 0}
+  Light: {fileID: 12800000, guid: 43453c643360bd944b180e8531506933, type: 3}
+  LightItalic: {fileID: 0}
+  Medium: {fileID: 12800000, guid: ac8a943414072794f9ebe4fe30fcfcfb, type: 3}
+  MediumItalic: {fileID: 0}
+  Regular: {fileID: 12800000, guid: 94df478150ad8a041a4d8f5e8882037f, type: 3}
+  SemiBold: {fileID: 12800000, guid: 009897c1c40083340b99461460dd0be4, type: 3}
+  SemiBoldItalic: {fileID: 0}
+  Thin: {fileID: 0}
+  ThinItalic: {fileID: 0}
+  Oblique: {fileID: 0}
+  Strikeout: {fileID: 0}
+  Underline: {fileID: 0}
+  UnderlineItalic: {fileID: 0}
+  UnderlineBold: {fileID: 0}
+  UnderlineLight: {fileID: 0}
+  UnderlineLightItalic: {fileID: 0}
+--- !u!114 &488119157
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 488119152}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bc6e18b102766f3409b8f755500078a8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Black: {fileID: 0}
+  BlackItalic: {fileID: 0}
+  Bold: {fileID: 0}
+  BoldItalic: {fileID: 0}
+  ExtraBold: {fileID: 0}
+  ExtraBoldItalic: {fileID: 0}
+  ExtraLight: {fileID: 0}
+  ExtraLightItalic: {fileID: 0}
+  Italic: {fileID: 0}
+  Light: {fileID: 0}
+  LightItalic: {fileID: 0}
+  Medium: {fileID: 0}
+  MediumItalic: {fileID: 0}
+  Regular: {fileID: 12800000, guid: 458de8665b8a8724baa6e9de2f815085, type: 3}
+  SemiBold: {fileID: 0}
+  SemiBoldItalic: {fileID: 0}
+  Thin: {fileID: 0}
+  ThinItalic: {fileID: 0}
+  Oblique: {fileID: 0}
+  Strikeout: {fileID: 0}
+  Underline: {fileID: 0}
+  UnderlineItalic: {fileID: 0}
+  UnderlineBold: {fileID: 0}
+  UnderlineLight: {fileID: 0}
+  UnderlineLightItalic: {fileID: 0}
+--- !u!114 &488119158
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 488119152}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bc6e18b102766f3409b8f755500078a8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Black: {fileID: 12800000, guid: b98aef5a2853c114e9a4e724f42495f8, type: 3}
+  BlackItalic: {fileID: 0}
+  Bold: {fileID: 12800000, guid: 1c83ff426e2cd054eb1a07f4743e4274, type: 3}
+  BoldItalic: {fileID: 0}
+  ExtraBold: {fileID: 12800000, guid: 94b78ffb9bc43d94297bb9fa1e381fd3, type: 3}
+  ExtraBoldItalic: {fileID: 0}
+  ExtraLight: {fileID: 12800000, guid: e7ce14d67fdb824429276b230e40f23a, type: 3}
+  ExtraLightItalic: {fileID: 0}
+  Italic: {fileID: 0}
+  Light: {fileID: 12800000, guid: e3b15b73012999b488bbd42230709170, type: 3}
+  LightItalic: {fileID: 0}
+  Medium: {fileID: 12800000, guid: d290945c0239b1642a10cad2f7f47a24, type: 3}
+  MediumItalic: {fileID: 0}
+  Regular: {fileID: 12800000, guid: 1d8faabcbc72c8040a13a6652b0d74d4, type: 3}
+  SemiBold: {fileID: 12800000, guid: 5d9d9ed02c90cf74b9ea9ca10dcacff9, type: 3}
+  SemiBoldItalic: {fileID: 0}
+  Thin: {fileID: 12800000, guid: b9ebd9034c5a24b46b193f07dae32f93, type: 3}
+  ThinItalic: {fileID: 0}
+  Oblique: {fileID: 0}
+  Strikeout: {fileID: 0}
+  Underline: {fileID: 0}
+  UnderlineItalic: {fileID: 0}
+  UnderlineBold: {fileID: 0}
+  UnderlineLight: {fileID: 0}
+  UnderlineLightItalic: {fileID: 0}
+--- !u!114 &488119163
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 488119152}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bc6e18b102766f3409b8f755500078a8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Black: {fileID: 0}
+  BlackItalic: {fileID: 0}
+  Bold: {fileID: 0}
+  BoldItalic: {fileID: 0}
+  ExtraBold: {fileID: 0}
+  ExtraBoldItalic: {fileID: 0}
+  ExtraLight: {fileID: 0}
+  ExtraLightItalic: {fileID: 0}
+  Italic: {fileID: 0}
+  Light: {fileID: 0}
+  LightItalic: {fileID: 0}
+  Medium: {fileID: 0}
+  MediumItalic: {fileID: 0}
+  Regular: {fileID: 12800000, guid: 5da278b0ef8074540a91ee0f0d53d9c9, type: 3}
+  SemiBold: {fileID: 0}
+  SemiBoldItalic: {fileID: 0}
+  Thin: {fileID: 0}
+  ThinItalic: {fileID: 0}
+  Oblique: {fileID: 0}
+  Strikeout: {fileID: 0}
+  Underline: {fileID: 0}
+  UnderlineItalic: {fileID: 0}
+  UnderlineBold: {fileID: 0}
+  UnderlineLight: {fileID: 0}
+  UnderlineLightItalic: {fileID: 0}
 --- !u!1 &541096545
 GameObject:
   m_ObjectHideFlags: 0
@@ -184,6 +405,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 803889020}
+  - component: {fileID: 803889021}
   m_Layer: 0
   m_Name: cAMhOLDER
   m_TagString: Untagged
@@ -207,6 +429,24 @@ Transform:
   m_Father: {fileID: 1045848416}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &803889021
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 803889019}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a2a9c34df4095f47b9ca8f975175f5b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Device: 0
+  m_PoseSource: 2
+  m_PoseProviderComponent: {fileID: 0}
+  m_TrackingType: 0
+  m_UpdateType: 0
+  m_UseRelativeTransform: 0
 --- !u!850595691 &893023246
 LightingSettings:
   m_ObjectHideFlags: 0
@@ -280,7 +520,6 @@ GameObject:
   - component: {fileID: 963194228}
   - component: {fileID: 963194227}
   - component: {fileID: 963194226}
-  - component: {fileID: 963194229}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -320,7 +559,7 @@ Camera:
     width: 1
     height: 1
   near clip plane: 0.01
-  far clip plane: 800
+  far clip plane: 10000
   field of view: 60
   orthographic: 0
   orthographic size: 5
@@ -354,24 +593,6 @@ Transform:
   m_Father: {fileID: 803889020}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &963194229
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 963194225}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5a2a9c34df4095f47b9ca8f975175f5b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Device: 0
-  m_PoseSource: 2
-  m_PoseProviderComponent: {fileID: 0}
-  m_TrackingType: 0
-  m_UpdateType: 0
-  m_UseRelativeTransform: 0
 --- !u!1 &1045848415
 GameObject:
   m_ObjectHideFlags: 0
@@ -434,7 +655,38 @@ Transform:
   m_Children:
   - {fileID: 1725982594}
   m_Father: {fileID: 0}
-  m_RootOrder: 1
+  m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1555001706
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1555001709}
+  m_Layer: 0
+  m_Name: TextRoot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1555001709
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1555001706}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: -1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1725982592
 GameObject:
@@ -460,7 +712,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1725982592}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a2483b9bd782f9449a5972b61b7d51a9, type: 3}
   m_Name: 
@@ -478,7 +730,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1725982592}
   m_LocalRotation: {x: 0, y: 0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: -0}
   m_LocalScale: {x: 1, y: 1, z: -1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -699,6 +951,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2077037299}
   - component: {fileID: 2077037300}
+  - component: {fileID: 2077037301}
   m_Layer: 0
   m_Name: Engine
   m_TagString: Untagged
@@ -719,7 +972,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 0
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2077037300
 MonoBehaviour:
@@ -733,10 +986,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9324e27b1accd1f429ce81aaad55b09c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  MainFont: {fileID: 2077037301}
   UserRoot: {fileID: 1725982592}
   UserHead: {fileID: 803889019}
   CameraOffset: {fileID: 1045848415}
   Root: {fileID: 1470998671}
+  TextRoot: {fileID: 1555001706}
   LeftController: {fileID: 1728657555}
   RightController: {fileID: 541096545}
   UnlitClip: {fileID: 4800000, guid: 8bc8c01374a21e94fbe7b230f43abb95, type: 3}
@@ -745,3 +1000,22 @@ MonoBehaviour:
   PBRClip: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
   isVR: 0
   speedMultply: 500
+  FontShader: {fileID: 4800000, guid: 26a41c3203d8c2e469bcc4cd10907b5d, type: 3}
+--- !u!114 &2077037301
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2077037298}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 803e48149a5a95047918b1f74b1462ef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fontStyles:
+  - {fileID: 488119153}
+  - {fileID: 488119158}
+  - {fileID: 488119157}
+  - {fileID: 488119156}
+  - {fileID: 488119163}

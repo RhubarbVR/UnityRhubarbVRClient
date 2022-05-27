@@ -128,5 +128,13 @@ public class UnityMaterial : IRMaterial
         });
     }
 
-  
+    public void SetRenderQueueOffset(object mit, int tex)
+    {
+        ((Material)mit).renderQueue = 3000 + tex;
+    }
+
+    public int GetRenderQueueOffset(object mit)
+    {
+        return ((Material)mit).renderQueue - 3000;
+    }
 }

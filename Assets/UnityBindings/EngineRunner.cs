@@ -11,6 +11,8 @@ using System.Threading;
 
 public class EngineRunner : MonoBehaviour
 {
+    public FontFallBackGroup MainFont;
+
     [ThreadStatic]
     public static bool IsMainThread = false;
     public class Holder<T>
@@ -44,7 +46,7 @@ public class EngineRunner : MonoBehaviour
             action();
             return;
         }
-        var manualResetEvent = new Semaphore(0,1);
+        var manualResetEvent = new Semaphore(0, 1);
         void ThreadAction()
         {
             action();
@@ -68,16 +70,108 @@ public class EngineRunner : MonoBehaviour
 
     public GameObject UserHead;
 
+    public class TextRender : IRemoveLater
+    {
+
+        GameObject gameObject;
+        TextMesh Text;
+        public TextRender(string id, string v, Matrix p)
+        {
+            gameObject = new GameObject("TextString" + id);
+            gameObject.transform.parent = EngineRunner._.TextRoot.transform;
+            Text = gameObject.AddComponent<TextMesh>();
+            Reload(v, p);
+        }
+
+        public bool UsedThisFrame { get; set; } = true;
+
+        public void Remove()
+        {
+            UnityEngine.Object.Destroy(gameObject);
+            UnityEngine.Object.Destroy(Text);
+        }
+
+        internal void Reload(string v, Matrix p)
+        {
+            UsedThisFrame = true;
+            Text.text = v;
+            var pos = p.Translation;
+            var rot = p.Rotation;
+            var scale = p.Scale;
+            gameObject.transform.localPosition = new Vector3(float.IsNaN(pos.x) ? 0 : pos.x, float.IsNaN(pos.y) ? 0 : pos.y, float.IsNaN(pos.z) ? 0 : pos.z);
+            gameObject.transform.localRotation = new Quaternion(float.IsNaN(rot.x) ? 0 : rot.x, float.IsNaN(rot.y) ? 0 : rot.y, float.IsNaN(rot.z) ? 0 : rot.z, float.IsNaN(rot.w) ? 0 : rot.w);
+            gameObject.transform.localScale = new Vector3(float.IsNaN(scale.x) ? 0 : scale.x, float.IsNaN(scale.y) ? 0 : scale.y, -(float.IsNaN(scale.z) ? 0 : scale.z));
+        }
+    }
+
+    public class CharRender : IRemoveLater
+    {
+
+        GameObject gameObject;
+        CharRenderComp Text;
+        public CharRender(string id, char v, Matrix p, Colorf color, Font instances, Vector2f textCut)
+        {
+            gameObject = new GameObject("TextString" + id);
+            gameObject.transform.parent = EngineRunner._.TextRoot.transform;
+            Text = gameObject.AddComponent<CharRenderComp>();
+            Text.StartCharRender(v, instances, new Color(color.r, color.g, color.b, color.a));
+        }
+
+        public bool UsedThisFrame { get; set; } = true;
+
+        public void Remove()
+        {
+            UnityEngine.Object.Destroy(gameObject);
+            UnityEngine.Object.Destroy(Text);
+        }
+
+        internal void Reload(char v, Matrix p, Colorf color, Font instances, Vector2f textCut)
+        {
+            UsedThisFrame = true;
+            Text.UpdateRender(v, instances, new Color(color.r, color.g, color.b, color.a));
+            var pos = p.Translation;
+            var rot = p.Rotation;
+            var scale = p.Scale;
+            gameObject.transform.localPosition = new Vector3(float.IsNaN(pos.x) ? 0 : pos.x, float.IsNaN(pos.y) ? 0 : pos.y, float.IsNaN(pos.z) ? 0 : pos.z);
+            gameObject.transform.localRotation = new Quaternion(float.IsNaN(rot.x) ? 0 : rot.x, float.IsNaN(rot.y) ? 0 : rot.y, float.IsNaN(rot.z) ? 0 : rot.z, float.IsNaN(rot.w) ? 0 : rot.w);
+            gameObject.transform.localScale = (new Vector3(-(float.IsNaN(scale.x) ? 0 : scale.x), float.IsNaN(scale.y) ? 0 : scale.y, (float.IsNaN(scale.z) ? 0 : scale.z))) / 355f;
+        }
+    }
+
+
     public void AddText(string id, string v, Matrix p)
     {
+        id = "Text." + id;
+        if (!tempObjects.ContainsKey(id))
+        {
+            tempObjects.Add(id, new TextRender(id, v, p));
+        }
+        else
+        {
+            ((TextRender)tempObjects[id]).Reload(v, p);
+        }
     }
 
     public GameObject CameraOffset;
 
     public GameObject Root;
+    public GameObject TextRoot;
 
-    public void AddChar(string id, char c, Matrix p, Font instances, RhuEngine.Linker.FontStyle fontStyle, Vector2f textCut)
+    public void AddChar(string id, char c, Matrix p, Colorf color, Font instances, Vector2f textCut)
     {
+        if(instances == null)
+        {
+            return;
+        }
+        id = "Char." + id;
+        if (!tempObjects.ContainsKey(id))
+        {
+            tempObjects.Add(id, new CharRender(id, c, p, color, instances, textCut));
+        }
+        else
+        {
+            ((CharRender)tempObjects[id]).Reload(c, p, color, instances, textCut);
+        }
     }
 
     public GameObject LeftController;
@@ -98,35 +192,32 @@ public class EngineRunner : MonoBehaviour
 
     public bool isHardwarePresent()
     {
-        var xrDisplaySubsystems = new List<XRDisplaySubsystem>();
-        SubsystemManager.GetInstances(xrDisplaySubsystems);
-        foreach (var xrDisplay in xrDisplaySubsystems)
-        {
-            if (xrDisplay.running)
-            {
-                var inputDevices = new List<UnityEngine.XR.InputDevice>();
-                UnityEngine.XR.InputDevices.GetDevices(inputDevices);
+        var inputDevices = new List<UnityEngine.XR.InputDevice>();
+        UnityEngine.XR.InputDevices.GetDevices(inputDevices);
 
-                foreach (var device in inputDevices)
+        foreach (var device in inputDevices)
+        {
+            Debug.Log(string.Format("Device found with name '{0}' and role '{1}'", device.name, device.role.ToString()));
+            if ((device.characteristics & InputDeviceCharacteristics.Controller) != InputDeviceCharacteristics.None)
+            {
+                if ((device.characteristics & InputDeviceCharacteristics.Right) != InputDeviceCharacteristics.None)
                 {
-                    Debug.Log(string.Format("Device found with name '{0}' and role '{1}'", device.name, device.role.ToString()));
-                    if ((device.characteristics & InputDeviceCharacteristics.Controller) != InputDeviceCharacteristics.None)
-                    {
-                        if ((device.characteristics & InputDeviceCharacteristics.Right) != InputDeviceCharacteristics.None)
-                        {
-                            right = device;
-                        }
-                        if ((device.characteristics & InputDeviceCharacteristics.Left) != InputDeviceCharacteristics.None)
-                        {
-                            left = device;
-                        }
-                    }
+                    right = device;
                 }
+                if ((device.characteristics & InputDeviceCharacteristics.Left) != InputDeviceCharacteristics.None)
+                {
+                    left = device;
+                }
+            }
+
+            if ((device.characteristics & InputDeviceCharacteristics.Camera) != InputDeviceCharacteristics.None)
+            {
                 return true;
             }
         }
         return false;
     }
+
 
     public Engine engine;
     public OutputCapture cap;
@@ -159,9 +250,17 @@ public class EngineRunner : MonoBehaviour
         engine.Init();
     }
 
-    public class TempMesh
+    public interface IRemoveLater
     {
-        public bool UsedThisFrame = true;
+        public void Remove();
+
+
+        public bool UsedThisFrame { get; set; }
+    }
+
+    public class TempMesh:IRemoveLater
+    {
+        public bool UsedThisFrame { get; set; } = true;
 
         public GameObject gameObject;
 
@@ -169,34 +268,17 @@ public class EngineRunner : MonoBehaviour
 
         public MeshRenderer meshRenderer;
 
-        public Material Parentmaterial;
+        Material targetMit;
 
-        public Material material;
 
-        public void Reload(Mesh mesh, Material target, Matrix p, Colorf tint)
+        public void Reload(Mesh mesh, Material target, Matrix p)
         {
+            if(targetMit != target)
+            {
+                targetMit = target;
+            }
             UsedThisFrame = true;
-            if (Parentmaterial == target)
-            {
-                try
-                {
-                    material.color = new Color(tint.r, tint.g, tint.b, tint.a);
-                }
-                catch { }
-            }
-            else
-            {
-                Parentmaterial = target;
-                UnityEngine.Object.Destroy(material);
-                material = new Material(target);
-                try
-                {
-                    material.color = new Color(tint.r, tint.g, tint.b, tint.a);
-                }
-                catch { }
-            }
-
-            meshRenderer.material = material;
+            meshRenderer.material = target;
             meshfilter.mesh = mesh;
             var pos = p.Translation;
             var rot = p.Rotation;
@@ -206,19 +288,13 @@ public class EngineRunner : MonoBehaviour
             gameObject.transform.localScale = new Vector3(float.IsNaN(scale.x) ? 0 : scale.x, float.IsNaN(scale.y) ? 0 : scale.y, float.IsNaN(scale.z) ? 0 : scale.z);
         }
 
-        public TempMesh(string id, Mesh mesh, Material target, Matrix p, Colorf tint)
+        public TempMesh(string id, Mesh mesh, Material target, Matrix p)
         {
-            Parentmaterial = target;
-            material = new Material(target);
-            try
-            {
-                material.color = new Color(tint.r, tint.g, tint.b, tint.a);
-            }
-            catch { }
+            targetMit = target;
             gameObject = new GameObject("TempMesh" + id);
             gameObject.transform.parent = EngineRunner._.Root.transform;
             meshRenderer = gameObject.AddComponent<MeshRenderer>();
-            meshRenderer.material = material;
+            meshRenderer.material = target;
             meshfilter = gameObject.AddComponent<MeshFilter>();
             meshfilter.mesh = mesh;
             var pos = p.Translation;
@@ -226,27 +302,27 @@ public class EngineRunner : MonoBehaviour
             var scale = p.Scale;
             gameObject.transform.localPosition = new Vector3(float.IsNaN(pos.x) ? 0 : pos.x, float.IsNaN(pos.y) ? 0 : pos.y, float.IsNaN(pos.z) ? 0 : pos.z);
             gameObject.transform.localRotation = new Quaternion(float.IsNaN(rot.x) ? 0 : rot.x, float.IsNaN(rot.y) ? 0 : rot.y, float.IsNaN(rot.z) ? 0 : rot.z, float.IsNaN(rot.w) ? 0 : rot.w);
-            gameObject.transform.localScale = new Vector3(float.IsNaN(scale.x) ? 0 : scale.x, float.IsNaN(scale.y) ? 0 : scale.y, float.IsNaN(scale.z) ? 0 : scale.z);
+            gameObject.transform.localScale = new Vector3(float.IsNaN(scale.x) ? 0 : scale.x, float.IsNaN(scale.y) ? 0 : scale.y, (float.IsNaN(scale.z) ? 0 : scale.z));
         }
 
         public void Remove()
         {
             UnityEngine.Object.Destroy(gameObject);
-            UnityEngine.Object.Destroy(material);
         }
     }
 
-    public Dictionary<string, TempMesh> tempmeshes = new();
+    public Dictionary<string, IRemoveLater> tempObjects = new();
 
-    public void Draw(string id, Mesh mesh, Material target, Matrix p, Colorf tint)
+    public void Draw(string id, Mesh mesh, Material target, Matrix p)
     {
-        if (!tempmeshes.ContainsKey(id))
+        id = "Mesh." + id;
+        if (!tempObjects.ContainsKey(id))
         {
-            tempmeshes.Add(id, new TempMesh(id, mesh, target, p, tint));
+            tempObjects.Add(id, new TempMesh(id, mesh, target, p));
         }
         else
         {
-            tempmeshes[id].Reload(mesh, target, p, tint);
+            ((TempMesh)tempObjects[id]).Reload(mesh, target, p);
         }
     }
     void MainThreadUpdate()
@@ -263,12 +339,14 @@ public class EngineRunner : MonoBehaviour
 
     public float speedMultply = 200f;
 
+    public Shader FontShader;
+
     void Update()
     {
         MainThreadUpdate();
         var sens = speedMultply * Time.deltaTime;
         MouseDelta = new Vector2f(Input.GetAxis("Mouse X") * sens, -Input.GetAxis("Mouse Y") * sens);
-        foreach (var item in tempmeshes)
+        foreach (var item in tempObjects)
         {
             item.Value.UsedThisFrame = false;
         }
@@ -276,7 +354,7 @@ public class EngineRunner : MonoBehaviour
         engine.Step();
         MainThreadUpdate();
         var removethisframe = new List<string>();
-        foreach (var item in tempmeshes)
+        foreach (var item in tempObjects)
         {
             if (!item.Value.UsedThisFrame)
             {
@@ -287,7 +365,7 @@ public class EngineRunner : MonoBehaviour
         MainThreadUpdate();
         foreach (var item in removethisframe)
         {
-            tempmeshes.Remove(item);
+            tempObjects.Remove(item);
         }
         MainThreadUpdate();
     }

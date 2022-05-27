@@ -6,6 +6,53 @@ using RhuEngine.Linker;
 using System;
 using RNumerics;
 using System.Linq;
+public static class MitManager
+{
+
+    public static Dictionary<(RMaterial, int,Colorf), Material> mits = new Dictionary<(RMaterial, int, Colorf), Material>();
+
+    public static Material GetMitWithOffset(RMaterial loadingLogo, int depth, Colorf color)
+    {
+        var mit = (Material)loadingLogo?.Target;
+        if (depth == 0 && color == Colorf.White)
+        {
+            return mit;
+        }
+        if (mits.ContainsKey((loadingLogo, depth, color)))
+        {
+            return mits[(loadingLogo, depth,color)];
+        }
+        else
+        {
+            return AddMit(loadingLogo, depth,color);
+        }
+    }
+
+    public static Material AddMit(RMaterial loadingLogo, int depth,Colorf color)
+    {
+        Material CreateNewMit()
+        {
+            var mit = (Material)loadingLogo?.Target;
+            var e = new Material(mit);
+            e.renderQueue += depth;
+            e.color = new Color(color.r, color.g, color.b, color.a);
+            mits.Add((loadingLogo, depth,color), e);
+            return mit;
+        }
+
+        loadingLogo.PramChanged += (mit) => {
+            UnityEngine.Object.Destroy(mits[(loadingLogo, depth,color)]);
+            mits.Remove((loadingLogo, depth,color));
+            CreateNewMit();
+        };
+        loadingLogo.OnDispose += (mit) => {
+            UnityEngine.Object.Destroy(mits[(loadingLogo, depth, color)]);
+            mits.Remove((loadingLogo, depth, color));
+        };
+        return CreateNewMit();
+    }
+}
+
 
 public class UnityMesh : IRMesh
 {
@@ -57,9 +104,9 @@ public class UnityMesh : IRMesh
 
     public EngineRunner EngineRunner { get; }
 
-    public void Draw(string id, object mesh, RMaterial loadingLogo, Matrix p, Colorf tint)
+    public void Draw(string id, object mesh, RMaterial loadingLogo, Matrix p, Colorf tint,int gueu)
     {
-        EngineRunner.Draw(id, (Mesh)mesh, (Material)loadingLogo.Target, p, tint);
+        EngineRunner.Draw(id, (Mesh)mesh,MitManager.GetMitWithOffset(loadingLogo,gueu,tint), p);
     }
 
     public void LoadMesh(RMesh meshtarget, IMesh rmesh)
@@ -86,7 +133,7 @@ public class UnityMesh : IRMesh
             normals[i] = new Vector3((float)vert.n.x, (float)vert.n.y, (float)vert.n.z);
             if (vert.bHaveUV && ((vert.uv?.Length ?? 0) > 0))
             {
-                uv[i] = new Vector3((float)vert.uv[0].x, (float)vert.uv[0].y);
+                uv[i] = new Vector3((float)vert.uv[0].x, -(float)vert.uv[0].y);
             }
             if (vert.bHaveC)
             {

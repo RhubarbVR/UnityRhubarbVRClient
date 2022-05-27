@@ -5,6 +5,7 @@ using RhuEngine;
 using RhuEngine.Linker;
 using System;
 using RhuEngine.Physics;
+using TextCopy;
 
 public class UnityEngineLink : IEngineLink
 {
@@ -36,6 +37,7 @@ public class UnityEngineLink : IEngineLink
 
     public void LoadStatics()
     {
+        ClipboardService.OverRide = new UnityClipBoardOverride();
         RTexture2D.Instance = new UnityTexture2D(EngineRunner);
         RMaterial.Instance = new UnityMaterial(EngineRunner);
         RMaterial.ConstInstance = new UnityMitStatics();
@@ -43,7 +45,7 @@ public class UnityEngineLink : IEngineLink
         RText.Instance = new UnityText(EngineRunner);
         RMesh.Instance = new UnityMesh(EngineRunner);
         RRenderer.Instance = new UnityRenderer(EngineRunner);
-        RFont.Instance = new UnityFont();
+        RFont.inst = new UnityFont();
         RTime.Instance = new UnityTime();
         RInput.Instance = new UnityInput(EngineRunner);
         //Use bypass to load libs

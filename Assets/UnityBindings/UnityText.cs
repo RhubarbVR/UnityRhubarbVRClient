@@ -5,7 +5,7 @@ using RhuEngine;
 using RhuEngine.Linker;
 using System;
 using RNumerics;
-using TMPro;
+
 public class UnityText : IRText
 {
     public EngineRunner EngineRunner;
@@ -19,17 +19,13 @@ public class UnityText : IRText
         EngineRunner.AddText(id, v, p);
     }
 
-    public void Add(string id, char c, Matrix p, Colorf color, RFont rFont, RhuEngine.Linker.FontStyle fontStyle, Vector2f textCut)
+    public void Add(string id, char c, Matrix p, Colorf color, RenderFont rFont, Vector2f textCut)
     {
-        EngineRunner.AddChar(id, c, p,(Font)rFont.Instances,fontStyle,textCut);
+        if ((Font)rFont?.Fontist is not null)
+        {
+            EngineRunner.AddChar(id, c, p, color, (Font)rFont.Fontist, textCut);
+        }
     }
 
-    public Vector2f Size(RFont rFont, char c, RhuEngine.Linker.FontStyle fontStyle)
-    {
-        return EngineRunner.RunonMainThread(() =>
-        {
-            ((Font)rFont.Instances).GetCharacterInfo(c, out var info);
-            return new Vector2f(100f / info.glyphWidth, 100f / info.glyphHeight);
-        });
-    }
+   
 }
