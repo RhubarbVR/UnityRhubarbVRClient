@@ -1,7 +1,7 @@
 Shader "Rhu/RhuUnlit" {
 	Properties{
 		_MainTex("Base (RGB) Trans (A)", 2D) = "white" {}
-		_Color("Tint", Color) = (0.0, 0.0, 1.0, 1.0)
+		_Color("Tint", Color) = (1.0, 1.0, 1.0, 1.0)
 	}
 
         SubShader{
