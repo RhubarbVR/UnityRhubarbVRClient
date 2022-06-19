@@ -62,6 +62,10 @@ public class CharRenderComp : MonoBehaviour
 
     public void UpdateRender(char ch, Font fontc, Color colord)
     {
+        if (fontc is null)
+        {
+            return;
+        }
         var update = false;
         if(ch != c)
         {
@@ -87,6 +91,10 @@ public class CharRenderComp : MonoBehaviour
     Material mit;
     public void StartCharRender(char ch, Font fontc,Color colord)
     {
+        if(fontc is null)
+        {
+            return;
+        }
         c = ch;
         font = fontc;
         color = colord;

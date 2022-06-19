@@ -95,9 +95,9 @@ public class EngineRunner : MonoBehaviour
         {
             UsedThisFrame = true;
             Text.text = v;
-            var pos = p.Translation;
-            var rot = p.Rotation;
-            var scale = p.Scale;
+            var pos = p.Translation - new Vector3f(0.1f, 0f, 0f);
+            var rot = p.Rotation * Quaternionf.Yawed180;
+            var scale = p.Scale * new Vector3f(0.02f);
             gameObject.transform.localPosition = new Vector3(float.IsNaN(pos.x) ? 0 : pos.x, float.IsNaN(pos.y) ? 0 : pos.y, float.IsNaN(pos.z) ? 0 : pos.z);
             gameObject.transform.localRotation = new Quaternion(float.IsNaN(rot.x) ? 0 : rot.x, float.IsNaN(rot.y) ? 0 : rot.y, float.IsNaN(rot.z) ? 0 : rot.z, float.IsNaN(rot.w) ? 0 : rot.w);
             gameObject.transform.localScale = new Vector3(float.IsNaN(scale.x) ? 0 : scale.x, float.IsNaN(scale.y) ? 0 : scale.y, -(float.IsNaN(scale.z) ? 0 : scale.z));
@@ -343,6 +343,10 @@ public class EngineRunner : MonoBehaviour
 
     void Update()
     {
+        if(engine is null)
+        {
+            return;
+        }
         MainThreadUpdate();
         var sens = speedMultply * Time.deltaTime;
         MouseDelta = new Vector2f(Input.GetAxis("Mouse X") * sens, -Input.GetAxis("Mouse Y") * sens);

@@ -79,7 +79,6 @@ public class UnityMeshRender : RenderLinkBase<MeshRender>
             meshFilter = gameObject.AddComponent<MeshFilter>();
             RenderingComponent.materials.Changed += Materials_Changed;
             RenderingComponent.colorLinear.Changed += ColorLinear_Changed;
-            RenderingComponent.Entity.GlobalTransformChange += Entity_GlobalTransformChange;
             RenderingComponent.mesh.LoadChange += Mesh_LoadChange;
         });
     }
@@ -95,10 +94,8 @@ public class UnityMeshRender : RenderLinkBase<MeshRender>
         }
     }
 
-    private void Entity_GlobalTransformChange(Entity obj)
+    private void Entity_GlobalTransformChange(Entity obj,bool data)
     {
-        EngineRunner._.RunonMainThread(() =>
-        {
             var m = RenderingComponent.Entity.GlobalTrans;
             var pos = m.Translation;
             var rot = m.Rotation;
@@ -106,8 +103,7 @@ public class UnityMeshRender : RenderLinkBase<MeshRender>
             gameObject.transform.localPosition = new Vector3(float.IsNaN(pos.x) ? 0 : pos.x, float.IsNaN(pos.y) ? 0 : pos.y, float.IsNaN(pos.z) ? 0 : pos.z);
             gameObject.transform.localRotation = new Quaternion(float.IsNaN(rot.x) ? 0 : rot.x, float.IsNaN(rot.y) ? 0 : rot.y, float.IsNaN(rot.z) ? 0 : rot.z, float.IsNaN(rot.w) ? 0 : rot.w);
             gameObject.transform.localScale = new Vector3(float.IsNaN(scale.x) ? 0 : scale.x, float.IsNaN(scale.y) ? 0 : scale.y, float.IsNaN(scale.z) ? 0 : scale.z);
-        });
-    }
+   }
 
     private void ColorLinear_Changed(IChangeable obj)
     {
@@ -183,8 +179,8 @@ public class UnityMeshRender : RenderLinkBase<MeshRender>
         {
             Materials_Changed(null);
             ColorLinear_Changed(null);
-            Entity_GlobalTransformChange(null);
             firstRender = false;
         }
+        Entity_GlobalTransformChange(null, false);
     }
 }

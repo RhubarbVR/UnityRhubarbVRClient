@@ -41,13 +41,19 @@ public static class MitManager
         }
 
         loadingLogo.PramChanged += (mit) => {
-            UnityEngine.Object.Destroy(mits[(loadingLogo, depth,color)]);
-            mits.Remove((loadingLogo, depth,color));
-            CreateNewMit();
+            EngineRunner._.RunonMainThread(() =>
+            {
+                UnityEngine.Object.Destroy(mits[(loadingLogo, depth, color)]);
+                mits.Remove((loadingLogo, depth, color));
+                CreateNewMit();
+            });
         };
         loadingLogo.OnDispose += (mit) => {
-            UnityEngine.Object.Destroy(mits[(loadingLogo, depth, color)]);
-            mits.Remove((loadingLogo, depth, color));
+            EngineRunner._.RunonMainThread(() =>
+            {
+                UnityEngine.Object.Destroy(mits[(loadingLogo, depth, color)]);
+                mits.Remove((loadingLogo, depth, color));
+            });
         };
         return CreateNewMit();
     }

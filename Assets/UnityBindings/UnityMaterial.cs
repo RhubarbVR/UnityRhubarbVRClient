@@ -4,7 +4,6 @@ using UnityEngine;
 using RhuEngine;
 using RhuEngine.Linker;
 using System;
-using UnityEditor;
 using RNumerics;
 
 public class UnityMaterial : IRMaterial
@@ -20,40 +19,7 @@ public class UnityMaterial : IRMaterial
     {
         if (tex != null)
         {
-            var prams = EngineRunner.RunonMainThread(() =>
-            {
-                return MaterialEditor.GetMaterialProperties(new UnityEngine.Object[] { ((Material)tex) });
-            });
-            foreach (var item in prams)
-            {
-                var name = RMaterial.RenameFromEngine(item.displayName);
-                switch (item.type)
-                {
-                    case MaterialProperty.PropType.Color:
-                        if (name != RMaterial.MainColor)
-                        {
-                            yield return new RMaterial.RMatParamInfo { name = name, type = MaterialParam.Vector4 };
-                        }
-                        break;
-                    case MaterialProperty.PropType.Vector:
-                        yield return new RMaterial.RMatParamInfo { name = name, type = MaterialParam.Vector3 };
-                        break;
-                    case MaterialProperty.PropType.Float:
-                        yield return new RMaterial.RMatParamInfo { name = name, type = MaterialParam.Float };
-                        break;
-                    case MaterialProperty.PropType.Range:
-                        yield return new RMaterial.RMatParamInfo { name = name, type = MaterialParam.Vector2 };
-                        break;
-                    case MaterialProperty.PropType.Texture:
-                        yield return new RMaterial.RMatParamInfo { name = name, type = MaterialParam.Texture };
-                        break;
-                    case MaterialProperty.PropType.Int:
-                        yield return new RMaterial.RMatParamInfo { name = name, type = MaterialParam.Int };
-                        break;
-                    default:
-                        break;
-                }
-            }
+            yield return new RMaterial.RMatParamInfo { name = "MAINTEXTURE_RHUBARB_CUSTOM", type = MaterialParam.Texture };
         }
     }
 
