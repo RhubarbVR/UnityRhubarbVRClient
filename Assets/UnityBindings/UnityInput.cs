@@ -35,7 +35,7 @@ public class UnityInput : IRInput
                 var rot = EngineRunner.UserHead.transform.rotation;
                 var pos = EngineRunner.UserHead.transform.position;
                 var scale = EngineRunner.UserHead.transform.lossyScale;
-                return Matrix.TRS(new Vector3f(pos.x, pos.y, pos.z), new Quaternionf(rot.x, rot.y, rot.z, rot.w), new Vector3f(scale.x, scale.y, scale.z)) * Matrix.S( new Vector3f(1,1,-1));
+                return Matrix.TRS(new Vector3f(pos.x, pos.y, -pos.z), new Quaternionf(-rot.x, -rot.y, rot.z, rot.w), new Vector3f(scale.x, scale.y, scale.z));
             }
         }
 
@@ -250,13 +250,17 @@ public class UnityInput : IRInput
             {
                 if(Handed == Handed.Left)
                 {
-                    var mat = EngineRunner.LeftController.transform.localToWorldMatrix;
-                    return new Matrix(mat.m00, mat.m01, mat.m02, mat.m03, mat.m10, mat.m11, mat.m12, mat.m13, mat.m20, mat.m21, mat.m22, mat.m23, mat.m30, mat.m31, mat.m32, mat.m33);
+                    var rot = EngineRunner.LeftController.transform.rotation;
+                    var pos = EngineRunner.LeftController.transform.position;
+                    var scale = EngineRunner.LeftController.transform.lossyScale;
+                    return Matrix.TRS(new Vector3f(pos.x, pos.y, -pos.z), new Quaternionf(-rot.x, -rot.y, rot.z, rot.w), new Vector3f(scale.x, scale.y, scale.z));
                 }
                 else
                 {
-                    var mat = EngineRunner.RightController.transform.localToWorldMatrix;
-                    return new Matrix(mat.m00, mat.m01, mat.m02, mat.m03, mat.m10, mat.m11, mat.m12, mat.m13, mat.m20, mat.m21, mat.m22, mat.m23, mat.m30, mat.m31, mat.m32, mat.m33);
+                    var rot = EngineRunner.RightController.transform.rotation;
+                    var pos = EngineRunner.RightController.transform.position;
+                    var scale = EngineRunner.RightController.transform.lossyScale;
+                    return Matrix.TRS(new Vector3f(pos.x, pos.y, -pos.z), new Quaternionf(-rot.x, -rot.y, rot.z, rot.w), new Vector3f(scale.x, scale.y, scale.z));
                 }
             }
         }
