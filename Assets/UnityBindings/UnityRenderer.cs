@@ -20,7 +20,7 @@ public class UnityRenderer : IRRenderer
         var rot = EngineRunner.UserRoot.transform.localRotation;
         var pos = EngineRunner.UserRoot.transform.localPosition;
         var scale = EngineRunner.UserRoot.transform.localScale;
-        return Matrix.TRS(new Vector3f(pos.x,pos.y,-pos.z),new Quaternionf(-rot.x,-rot.y,rot.z,rot.w),new Vector3f(scale.x,scale.y,scale.z));
+        return Matrix.TRS(new Vector3f(pos.x, pos.y, -pos.z), new Quaternionf(-rot.x, -rot.y, rot.z, rot.w), new Vector3f(scale.x, scale.y, scale.z));
     }
 
     public bool GetEnableSky()

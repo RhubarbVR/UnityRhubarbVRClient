@@ -347,6 +347,21 @@ public class EngineRunner : MonoBehaviour
         for (int i = 0; i < devices.Count; i++)
         {
             Debug.Log($"Devices {i} Name:{devices[i].name} Manufacturer:{devices[i].manufacturer} Manufacturer:{devices[i].characteristics}");
+            var charictes = devices[i].characteristics;
+            if ((charictes & InputDeviceCharacteristics.Left) != InputDeviceCharacteristics.None)
+            {
+                if ((charictes & InputDeviceCharacteristics.Controller) != InputDeviceCharacteristics.None)
+                {
+                    left = devices[i];
+                }
+            }
+            if ((charictes & InputDeviceCharacteristics.Right) != InputDeviceCharacteristics.None)
+            {
+                if ((charictes & InputDeviceCharacteristics.Controller) != InputDeviceCharacteristics.None)
+                {
+                    right = devices[i];
+                }
+            }
         }
     }
 
@@ -356,13 +371,16 @@ public class EngineRunner : MonoBehaviour
         {
             return;
         }
+        MainThreadUpdate();
         var sens = speedMultply * Time.deltaTime;
         MouseDelta = new Vector2f(Input.GetAxis("Mouse X") * sens, -Input.GetAxis("Mouse Y") * sens);
         foreach (var item in tempObjects)
         {
             item.Value.UsedThisFrame = false;
         }
+        MainThreadUpdate();
         engine.Step();
+        MainThreadUpdate();
         var removethisframe = new List<string>();
         foreach (var item in tempObjects)
         {

@@ -15,7 +15,6 @@ public class CharRenderComp : MonoBehaviour
     {
         if (changedFont != font)
             return;
-
         RebuildMesh();
     }
 
@@ -29,7 +28,6 @@ public class CharRenderComp : MonoBehaviour
         Vector3 pos = Vector3.zero;
 
         font.GetCharacterInfo(c, out var ch, 355);
-
         vertices[0] = pos + new Vector3(ch.minX, ch.maxY, -1);
         vertices[1] = pos + new Vector3(ch.maxX, ch.maxY, -1);
         vertices[2] = pos + new Vector3(ch.maxX, ch.minY, -1);

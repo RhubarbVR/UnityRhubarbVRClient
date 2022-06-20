@@ -79,6 +79,7 @@ public class UnityMeshRender : RenderLinkBase<MeshRender>
             meshFilter = gameObject.AddComponent<MeshFilter>();
             RenderingComponent.materials.Changed += Materials_Changed;
             RenderingComponent.colorLinear.Changed += ColorLinear_Changed;
+            RenderingComponent.OrderOffset.Changed += ColorLinear_Changed;
             RenderingComponent.mesh.LoadChange += Mesh_LoadChange;
         });
     }
@@ -114,6 +115,7 @@ public class UnityMeshRender : RenderLinkBase<MeshRender>
                 var color = RenderingComponent.colorLinear.Value;
                 if (materials[i] is not null)
                 {
+                    materials[i].renderQueue = Math.Clamp(((Material)RenderingComponent.materials[i].Asset?.Target).renderQueue + RenderingComponent.OrderOffset.Value,-1000,5000);
                     materials[i].color = new Color(color.r, color.g, color.b, color.a);
                 }
             }
@@ -136,6 +138,7 @@ public class UnityMeshRender : RenderLinkBase<MeshRender>
                     materials[i] = new Material((Material)RenderingComponent.materials[i].Asset?.Target);
                     var color = RenderingComponent.colorLinear.Value;
                     materials[i].color = new Color(color.r, color.g, color.b, color.a);
+                    materials[i].renderQueue = Math.Clamp(materials[i].renderQueue + RenderingComponent.OrderOffset.Value, -1000, 5000);
                 }
                 catch { }
             }
