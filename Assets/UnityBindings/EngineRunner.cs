@@ -11,6 +11,7 @@ using System.Threading;
 using System.Diagnostics;
 using Debug = UnityEngine.Debug;
 using UnityEngine.XR.Management;
+using System.Text;
 
 public class EngineRunner : MonoBehaviour
 {
@@ -75,7 +76,7 @@ public class EngineRunner : MonoBehaviour
 
         GameObject gameObject;
         CharRenderComp Text;
-        public CharRender(string id, char v, Matrix p, Colorf color, Font instances, Vector2f textCut)
+        public CharRender(string id, Rune v, Matrix p, Colorf color, Font instances, Vector2f textCut)
         {
             gameObject = new GameObject("TextString" + id);
             gameObject.transform.parent = EngineRunner._.TextRoot.transform;
@@ -91,7 +92,7 @@ public class EngineRunner : MonoBehaviour
             UnityEngine.Object.Destroy(Text);
         }
 
-        internal void Reload(char v, Matrix p, Colorf color, Font instances, Vector2f textCut)
+        internal void Reload(Rune v, Matrix p, Colorf color, Font instances, Vector2f textCut)
         {
             UsedThisFrame = true;
             Text.UpdateRender(v, instances, new Color(color.r, color.g, color.b, color.a));
@@ -157,7 +158,7 @@ public class EngineRunner : MonoBehaviour
         runonmainthread.SafeAdd(action);
     }
 
-    public void AddChar(string id, char c, Matrix p, Colorf color, Font instances, Vector2f textCut)
+    public void AddChar(string id, Rune c, Matrix p, Colorf color, Font instances, Vector2f textCut)
     {
         if(instances == null)
         {

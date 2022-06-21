@@ -5,6 +5,7 @@ using RhuEngine;
 using RhuEngine.Linker;
 using System;
 using RNumerics;
+using System.Text;
 
 public class UnityText : IRText
 {
@@ -19,7 +20,7 @@ public class UnityText : IRText
         EngineRunner.AddText(id, v, p);
     }
 
-    public void Add(string id,string group, char c, Matrix p, Colorf color, RenderFont rFont, Vector2f textCut)
+    public void Add(string id,string group, Rune c, Matrix p, Colorf color, RenderFont rFont, Vector2f textCut)
     {
         if ((Font)rFont?.Fontist is not null)
         {

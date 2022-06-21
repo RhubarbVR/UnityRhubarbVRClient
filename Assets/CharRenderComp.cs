@@ -1,12 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using TMPro;
 using UnityEngine;
 
 public class CharRenderComp : MonoBehaviour
 {
     public Font font;
-    public char c;
+    public Rune c;
     public Color color;
     string str => c.ToString();
     Mesh mesh;
@@ -27,7 +28,7 @@ public class CharRenderComp : MonoBehaviour
         var colors = new Color[4];
         Vector3 pos = Vector3.zero;
 
-        font.GetCharacterInfo(c, out var ch, 355);
+        font.GetCharacterInfo(c.ToString()[0], out var ch, 355);
         vertices[0] = pos + new Vector3(ch.minX, ch.maxY, -1);
         vertices[1] = pos + new Vector3(ch.maxX, ch.maxY, -1);
         vertices[2] = pos + new Vector3(ch.maxX, ch.minY, -1);
@@ -58,7 +59,7 @@ public class CharRenderComp : MonoBehaviour
 
     }
 
-    public void UpdateRender(char ch, Font fontc, Color colord)
+    public void UpdateRender(Rune ch, Font fontc, Color colord)
     {
         if (fontc is null)
         {
@@ -87,7 +88,7 @@ public class CharRenderComp : MonoBehaviour
         }
     }
     Material mit;
-    public void StartCharRender(char ch, Font fontc,Color colord)
+    public void StartCharRender(Rune ch, Font fontc,Color colord)
     {
         if(fontc is null)
         {

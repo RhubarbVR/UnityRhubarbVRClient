@@ -1038,10 +1038,10 @@ MonoBehaviour:
   RightController: {fileID: 541096545}
   UnlitClip: {fileID: 4800000, guid: 8bc8c01374a21e94fbe7b230f43abb95, type: 3}
   Unlit: {fileID: 4800000, guid: 8bc8c01374a21e94fbe7b230f43abb95, type: 3}
-  PBR: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
-  PBRClip: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
+  PBR: {fileID: 46, guid: 0000000000000000f000000000000000, type: 3}
+  PBRClip: {fileID: 46, guid: 0000000000000000f000000000000000, type: 3}
   isVR: 0
-  IsVREnabled: 1
+  IsVREnabled: 0
   speedMultply: 500
   FontShader: {fileID: 4800000, guid: 26a41c3203d8c2e469bcc4cd10907b5d, type: 3}
 --- !u!114 &2077037301
