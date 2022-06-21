@@ -19,7 +19,7 @@ public class UnityText : IRText
         EngineRunner.AddText(id, v, p);
     }
 
-    public void Add(string id, char c, Matrix p, Colorf color, RenderFont rFont, Vector2f textCut)
+    public void Add(string id,string group, char c, Matrix p, Colorf color, RenderFont rFont, Vector2f textCut)
     {
         if ((Font)rFont?.Fontist is not null)
         {

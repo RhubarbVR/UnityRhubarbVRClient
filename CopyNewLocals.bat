@@ -1,0 +1,1 @@
+xcopy /s ".\Assets\Plugins\Locales" ".\WindowsBuild\Locales"

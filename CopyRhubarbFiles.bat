@@ -1,0 +1,1 @@
+xcopy /s "..\RhubarbVR\RhuEngine\bin\Release\netstandard2.0" ".\Assets\Plugins"

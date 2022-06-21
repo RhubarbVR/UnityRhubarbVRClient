@@ -229,6 +229,112 @@ public class UnityInput : IRInput
         }
 
         public IRStick Stick => new VRStick(Handed, EngineRunner);
+
+        public string Model
+        {
+            get
+            {
+                var val_L = EngineRunner.left.name;
+                var val_R = EngineRunner.right.name;
+                switch (Handed)
+                {
+                    case Handed.Left:
+                        return val_L;
+                    case Handed.Right:
+                        return val_R;
+                    case Handed.Max:
+                        return ("L" + val_L + " R" + val_R);
+                    default:
+                        break;
+                }
+                return null;
+            }
+        }
+
+        public static KnownControllers GetKnownController(string name)
+        {
+            name = name.ToLower();
+            if (name.Contains("vive"))
+            {
+                return KnownControllers.Vive;
+            }
+            if (name.Contains("touch"))
+            {
+                return KnownControllers.Touch;
+            }
+            if (name.Contains("index"))
+            {
+                return KnownControllers.Index;
+            }
+            if (name.Contains("cosmos"))
+            {
+                return KnownControllers.Cosmos;
+            }
+            if (name.Contains("generic"))
+            {
+                return KnownControllers.GenericXR;
+            }
+            if (name.Contains("khronos"))
+            {
+                return KnownControllers.Khronos;
+            }
+            if (name.Contains("hand"))
+            {
+                return KnownControllers.MicrosoftHand;
+            }
+            if (name.Contains("reverb"))
+            {
+                return KnownControllers.HPReverb;
+            }
+            if (name.Contains("etee"))
+            {
+                return KnownControllers.Etee;
+            }
+            return KnownControllers.Unknown;
+        } 
+
+        public KnownControllers ModelEnum
+        {
+            get
+            {
+                var val_L = GetKnownController(EngineRunner.left.name);
+                var val_R = GetKnownController(EngineRunner.right.name);
+                switch (Handed)
+                {
+                    case Handed.Left:
+                        return val_L;
+                    case Handed.Right:
+                        return val_R;
+                    case Handed.Max:
+                        return val_L & val_R;
+                    default:
+                        break;
+                }
+                return KnownControllers.Unknown;
+            }
+        }
+
+
+        public float BatteryPercentage
+        {
+            get
+            {
+                EngineRunner.left.TryGetFeatureValue(CommonUsages.batteryLevel, out var val_L);
+                EngineRunner.right.TryGetFeatureValue(CommonUsages.batteryLevel, out var val_R);
+                switch (Handed)
+                {
+                    case Handed.Left:
+                        return val_L;
+                    case Handed.Right:
+                        return val_R;
+                    case Handed.Max:
+                        return (val_L + val_R) / 2;
+                    default:
+                        break;
+                }
+                return 0;
+            }
+        }
     }
 
     public IRController Controller(Handed handed)
