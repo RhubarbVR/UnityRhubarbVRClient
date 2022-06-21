@@ -253,6 +253,10 @@ public class UnityInput : IRInput
 
         public static KnownControllers GetKnownController(string name)
         {
+            if(name is null)
+            {
+                return KnownControllers.Unknown;
+            }
             name = name.ToLower();
             if (name.Contains("vive"))
             {
@@ -356,9 +360,9 @@ public class UnityInput : IRInput
             {
                 if(Handed == Handed.Left)
                 {
-                    var rot = EngineRunner.LeftController.transform.rotation;
-                    var pos = EngineRunner.LeftController.transform.position;
-                    var scale = EngineRunner.LeftController.transform.lossyScale;
+                    var rot = EngineRunner.LeftController?.transform.rotation?? Quaternion.identity;
+                    var pos = EngineRunner.LeftController?.transform.position ?? Vector3.zero;
+                    var scale = EngineRunner.LeftController?.transform.lossyScale??Vector3.one;
                     return Matrix.TRS(new Vector3f(pos.x, pos.y, -pos.z), new Quaternionf(-rot.x, -rot.y, rot.z, rot.w), new Vector3f(scale.x, scale.y, scale.z));
                 }
                 else

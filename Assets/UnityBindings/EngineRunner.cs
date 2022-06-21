@@ -10,6 +10,7 @@ using RNumerics;
 using System.Threading;
 using System.Diagnostics;
 using Debug = UnityEngine.Debug;
+using UnityEngine.XR.Management;
 
 public class EngineRunner : MonoBehaviour
 {
@@ -210,24 +211,28 @@ public class EngineRunner : MonoBehaviour
 
     public bool isVR = false;
 
+    public bool IsVREnabled = false;
+
     IEnumerator Start()
     {
+        XRSettings.enabled = IsVREnabled;
         IsMainThread = true;
         _ = this;
-        List<string> list = new()
-        {
-        "oculus",
-        "openvr",
-        "none",
-        };
-        if (Process.GetProcessesByName("vrcompositor").Length != 0 && Process.GetProcessesByName("vrmonitor").Length != 0)
-        {
-            Debug.Log("Detected SteamVR running, skipping Oculus Runtime initialization.");
-            list.Remove("oculus");
-        }
-        XRSettings.LoadDeviceByName(list.ToArray());
         yield return null;
-        isVR = isHardwarePresent();
+
+        var xrLoader = XRGeneralSettings.Instance.Manager.activeLoader;
+        var xrDisplay = xrLoader.GetLoadedSubsystem<XRDisplaySubsystem>();
+        if (!IsVREnabled)
+        {
+            XRGeneralSettings.Instance.Manager.StopSubsystems();
+            xrDisplay.Stop();
+        }
+        var platform = Application.platform;
+        if(platform == RuntimePlatform.Android)
+        {
+            Debug.Log("Is on Android");
+        }
+        isVR = isHardwarePresent() && IsVREnabled;
         if (!isVR)
         {
             Debug.Log("Starting RuhbarbVR ScreenMode");
