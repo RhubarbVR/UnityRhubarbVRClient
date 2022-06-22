@@ -131,27 +131,14 @@ public class UnityMeshRender : RenderLinkBase<MeshRender>
             {
                 UnityEngine.Object.Destroy(materials[i]);
             }
+            
             materials = new Material[RenderingComponent.materials.Count];
             for (int i = 0; i < RenderingComponent.materials.Count; i++)
             {
                 var mit = (UnityMaterialHolder)RenderingComponent.materials[i].Asset?.Target;
-                if (mit is not null)
+                if(mit is not null)
                 {
-                    if (mit.material is not null)
-                    {
-                        try
-                        {
-                            materials[i] = new Material(mit.material);
-                            var color = RenderingComponent.colorLinear.Value;
-                            materials[i].color = new Color(color.r, color.g, color.b, color.a);
-                            materials[i].renderQueue = Math.Clamp(materials[i].renderQueue + RenderingComponent.OrderOffset.Value, -1000, 5000);
-                        }
-                        catch { }
-                    }
-                    else
-                    {
-                        materials[i] = null;
-                    }
+                    materials[i] = MitManager.GetMitWithOffset(RenderingComponent.materials[i].Asset, RenderingComponent.OrderOffset.Value, RenderingComponent.colorLinear.Value).material;
                 }
                 else
                 {

@@ -20,7 +20,17 @@ public static class MitManager
         }
         if (mits.ContainsKey((loadingLogo, depth, color)))
         {
-            return mits[(loadingLogo, depth,color)];
+            var returndata = mits[(loadingLogo, depth, color)];
+            if(returndata is null)
+            {
+                RLog.Info("MitWAs Null");
+                mits.Remove((loadingLogo, depth, color));
+                return AddMit(loadingLogo, depth, color);
+            }
+            else
+            {
+                return returndata;
+            }
         }
         else
         {
@@ -37,7 +47,7 @@ public static class MitManager
                 var mit = (UnityMaterialHolder)loadingLogo?.Target;
                 var e = new Material(mit.material);
                 e.renderQueue += depth;
-                e.color = new Color(color.r, color.g, color.b, color.a);
+                e.color *= new Color(color.r, color.g, color.b, color.a);
                 return e;
             });
             mits.Add((loadingLogo, depth, color), miter);
