@@ -11,14 +11,5 @@ public class UnityShader : IRShader
     {
         EngineRunner = engineRunner;
     }
-
-    public RShader UnlitClip => new RShader(EngineRunner.UnlitClip);
-
-    public RShader PBRClip => new RShader(EngineRunner.PBRClip);
-
-    public RShader PBR => new RShader(EngineRunner.PBR);
-
-    public RShader Unlit => new RShader(EngineRunner.Unlit);
-
     public EngineRunner EngineRunner { get; }
 }

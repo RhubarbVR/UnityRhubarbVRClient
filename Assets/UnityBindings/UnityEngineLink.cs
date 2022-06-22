@@ -42,12 +42,11 @@ public class UnityEngineLink : IEngineLink
         RMaterial.Instance = new UnityMaterial(EngineRunner);
         RMaterial.ConstInstance = new UnityMitStatics();
         RShader.Instance = new UnityShader(EngineRunner);
-        RText.Instance = new UnityText(EngineRunner);
         RMesh.Instance = new UnityMesh(EngineRunner);
         RRenderer.Instance = new UnityRenderer(EngineRunner);
-        RFont.inst = new UnityFont();
         RTime.Instance = new UnityTime();
         RInput.Instance = new UnityInput(EngineRunner);
+        StaticMaterialManager.Instanances = new UnitStaticMits(EngineRunner);
         //Use bypass to load libs
         new RBullet.BulletPhsyicsLink(true).RegisterPhysics();
     }

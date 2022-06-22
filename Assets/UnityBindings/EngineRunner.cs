@@ -15,7 +15,6 @@ using System.Text;
 
 public class EngineRunner : MonoBehaviour
 {
-    public FontFallBackGroup MainFont;
 
     [ThreadStatic]
     public static bool IsMainThread = false;
@@ -34,120 +33,9 @@ public class EngineRunner : MonoBehaviour
 
     public Camera Camera;
 
-    public class TextRender : IRemoveLater
-    {
-
-        GameObject gameObject;
-        TextMesh Text;
-        public TextRender(string id, string v, Matrix p)
-        {
-            gameObject = new GameObject("TextString" + id);
-            gameObject.transform.parent = EngineRunner._.TextRoot.transform;
-            Text = gameObject.AddComponent<TextMesh>();
-            Text.fontSize = 100;
-            Text.alignment = TextAlignment.Center;
-            Text.anchor = TextAnchor.UpperCenter;
-            Reload(v, p);
-        }
-
-        public bool UsedThisFrame { get; set; } = true;
-
-        public void Remove()
-        {
-            UnityEngine.Object.Destroy(gameObject);
-            UnityEngine.Object.Destroy(Text);
-        }
-
-        internal void Reload(string v, Matrix p)
-        {
-            UsedThisFrame = true;
-            Text.text = v;
-            var pos = p.Translation;
-            var rot = p.Rotation * Quaternionf.Yawed180;
-            var scale = p.Scale * new Vector3f(0.002f);
-            gameObject.transform.localPosition = new Vector3(float.IsNaN(pos.x) ? 0 : pos.x, float.IsNaN(pos.y) ? 0 : pos.y, float.IsNaN(pos.z) ? 0 : pos.z);
-            gameObject.transform.localRotation = new Quaternion(float.IsNaN(rot.x) ? 0 : rot.x, float.IsNaN(rot.y) ? 0 : rot.y, float.IsNaN(rot.z) ? 0 : rot.z, float.IsNaN(rot.w) ? 0 : rot.w);
-            gameObject.transform.localScale = new Vector3(float.IsNaN(scale.x) ? 0 : scale.x, float.IsNaN(scale.y) ? 0 : scale.y, -(float.IsNaN(scale.z) ? 0 : scale.z));
-        }
-    }
-
-    public class CharRender : IRemoveLater
-    {
-
-        GameObject gameObject;
-        CharRenderComp Text;
-        public CharRender(string id, Rune v, Matrix p, Colorf color, Font instances, Vector2f textCut)
-        {
-            gameObject = new GameObject("TextString" + id);
-            gameObject.transform.parent = EngineRunner._.TextRoot.transform;
-            Text = gameObject.AddComponent<CharRenderComp>();
-            Text.StartCharRender(v, instances, new Color(color.r, color.g, color.b, color.a));
-        }
-
-        public bool UsedThisFrame { get; set; } = true;
-
-        public void Remove()
-        {
-            UnityEngine.Object.Destroy(gameObject);
-            UnityEngine.Object.Destroy(Text);
-        }
-
-        internal void Reload(Rune v, Matrix p, Colorf color, Font instances, Vector2f textCut)
-        {
-            UsedThisFrame = true;
-            Text.UpdateRender(v, instances, new Color(color.r, color.g, color.b, color.a));
-            var pos = p.Translation;
-            var rot = p.Rotation;
-            var scale = p.Scale;
-            gameObject.transform.localPosition = new Vector3(float.IsNaN(pos.x) ? 0 : pos.x, float.IsNaN(pos.y) ? 0 : pos.y, float.IsNaN(pos.z) ? 0 : pos.z);
-            gameObject.transform.localRotation = new Quaternion(float.IsNaN(rot.x) ? 0 : rot.x, float.IsNaN(rot.y) ? 0 : rot.y, float.IsNaN(rot.z) ? 0 : rot.z, float.IsNaN(rot.w) ? 0 : rot.w);
-            gameObject.transform.localScale = (new Vector3(-(float.IsNaN(scale.x) ? 0 : scale.x), float.IsNaN(scale.y) ? 0 : scale.y, (float.IsNaN(scale.z) ? 0 : scale.z))) / 355f;
-        }
-    }
-
-
-    public void AddText(string id, string v, Matrix p)
-    {
-        id = "Text." + id;
-        if (!tempObjects.ContainsKey(id))
-        {
-            tempObjects.Add(id, new TextRender(id, v, p));
-        }
-        else
-        {
-            ((TextRender)tempObjects[id]).Reload(v, p);
-        }
-    }
-
     public GameObject CameraOffset;
 
     public GameObject Root;
-    public GameObject TextRoot;
-
-    public class Holder<T>
-    {
-        public T item;
-    }
-    public T RunonMainThread<T>(Func<T> action)
-    {
-        if (IsMainThread)
-        {
-            return action();
-        }
-        var manualResetEvent = new Semaphore(0, 1);
-        var datapass = new Holder<T>();
-        void ThreadAction()
-        {
-            datapass.item = action();
-            manualResetEvent.Release();
-        }
-        runonmainthread.SafeAdd(ThreadAction);
-        manualResetEvent.WaitOne();
-        manualResetEvent.Close();
-        manualResetEvent.Dispose();
-        return datapass.item;
-    }
-
     public void RunonMainThread(Action action)
     {
         if (IsMainThread)
@@ -158,34 +46,15 @@ public class EngineRunner : MonoBehaviour
         runonmainthread.SafeAdd(action);
     }
 
-    public void AddChar(string id, Rune c, Matrix p, Colorf color, Font instances, Vector2f textCut)
-    {
-        if(instances == null)
-        {
-            return;
-        }
-        id = "Char." + id;
-        if (!tempObjects.ContainsKey(id))
-        {
-            tempObjects.Add(id, new CharRender(id, c, p, color, instances, textCut));
-        }
-        else
-        {
-            ((CharRender)tempObjects[id]).Reload(c, p, color, instances, textCut);
-        }
-    }
-
     public GameObject LeftController;
 
     public GameObject RightController;
 
-    public Shader UnlitClip;
-
     public Shader Unlit;
+    public Shader UnlitTransparentAdditive;
+    public Shader UnlitTransparentBlend;
+    public Shader TextShader;
 
-    public Shader PBR;
-
-    public Shader PBRClip;
 
     public InputDevice left;
 
@@ -319,6 +188,10 @@ public class EngineRunner : MonoBehaviour
 
     public void Draw(string id, Mesh mesh, Material target, Matrix p)
     {
+        if(target is null)
+        {
+            return;
+        }
         id = "Mesh." + id;
         if (!tempObjects.ContainsKey(id))
         {
@@ -342,8 +215,7 @@ public class EngineRunner : MonoBehaviour
     }
 
     public float speedMultply = 200f;
-
-    public Shader FontShader;
+    public Texture LoadingTexture;
 
     public void InputDevices_Update(InputDevice inputDevice)
     {

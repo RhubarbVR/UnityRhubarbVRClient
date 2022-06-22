@@ -115,7 +115,8 @@ public class UnityMeshRender : RenderLinkBase<MeshRender>
                 var color = RenderingComponent.colorLinear.Value;
                 if (materials[i] is not null)
                 {
-                    materials[i].renderQueue = Math.Clamp(((Material)RenderingComponent.materials[i].Asset?.Target).renderQueue + RenderingComponent.OrderOffset.Value,-1000,5000);
+                    var mit = ((UnityMaterialHolder)RenderingComponent.materials[i].Asset?.Target).material;
+                    materials[i].renderQueue = Math.Clamp(mit.renderQueue + RenderingComponent.OrderOffset.Value,-1000,5000);
                     materials[i].color = new Color(color.r, color.g, color.b, color.a);
                 }
             }
@@ -133,14 +134,29 @@ public class UnityMeshRender : RenderLinkBase<MeshRender>
             materials = new Material[RenderingComponent.materials.Count];
             for (int i = 0; i < RenderingComponent.materials.Count; i++)
             {
-                try
+                var mit = (UnityMaterialHolder)RenderingComponent.materials[i].Asset?.Target;
+                if (mit is not null)
                 {
-                    materials[i] = new Material((Material)RenderingComponent.materials[i].Asset?.Target);
-                    var color = RenderingComponent.colorLinear.Value;
-                    materials[i].color = new Color(color.r, color.g, color.b, color.a);
-                    materials[i].renderQueue = Math.Clamp(materials[i].renderQueue + RenderingComponent.OrderOffset.Value, -1000, 5000);
+                    if (mit.material is not null)
+                    {
+                        try
+                        {
+                            materials[i] = new Material(mit.material);
+                            var color = RenderingComponent.colorLinear.Value;
+                            materials[i].color = new Color(color.r, color.g, color.b, color.a);
+                            materials[i].renderQueue = Math.Clamp(materials[i].renderQueue + RenderingComponent.OrderOffset.Value, -1000, 5000);
+                        }
+                        catch { }
+                    }
+                    else
+                    {
+                        materials[i] = null;
+                    }
                 }
-                catch { }
+                else
+                {
+                    materials[i] = null;
+                }
             }
             meshRenderer.materials = materials;
         });

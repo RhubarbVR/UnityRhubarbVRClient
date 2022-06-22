@@ -9,11 +9,11 @@ using System.Linq;
 public static class MitManager
 {
 
-    public static Dictionary<(RMaterial, int,Colorf), Material> mits = new Dictionary<(RMaterial, int, Colorf), Material>();
+    public static Dictionary<(RMaterial, int,Colorf), UnityMaterialHolder> mits = new Dictionary<(RMaterial, int, Colorf), UnityMaterialHolder>();
 
-    public static Material GetMitWithOffset(RMaterial loadingLogo, int depth, Colorf color)
+    public static UnityMaterialHolder GetMitWithOffset(RMaterial loadingLogo, int depth, Colorf color)
     {
-        var mit = (Material)loadingLogo?.Target;
+        var mit = (UnityMaterialHolder)loadingLogo?.Target;
         if (depth == 0 && color == Colorf.White)
         {
             return mit;
@@ -28,30 +28,36 @@ public static class MitManager
         }
     }
 
-    public static Material AddMit(RMaterial loadingLogo, int depth,Colorf color)
+    public static UnityMaterialHolder AddMit(RMaterial loadingLogo, int depth,Colorf color)
     {
-        Material CreateNewMit()
+        UnityMaterialHolder CreateNewMit()
         {
-            var mit = (Material)loadingLogo?.Target;
-            var e = new Material(mit);
-            e.renderQueue += depth;
-            e.color = new Color(color.r, color.g, color.b, color.a);
-            mits.Add((loadingLogo, depth,color), e);
-            return mit;
+            var miter =  new UnityMaterialHolder(EngineRunner._, ()=>
+            {
+                var mit = (UnityMaterialHolder)loadingLogo?.Target;
+                var e = new Material(mit.material);
+                e.renderQueue += depth;
+                e.color = new Color(color.r, color.g, color.b, color.a);
+                return e;
+            });
+            mits.Add((loadingLogo, depth, color), miter);
+            return miter;
         }
 
-        loadingLogo.PramChanged += (mit) => {
+        loadingLogo.PramChanged += (mit) =>
+        {
             EngineRunner._.RunonMainThread(() =>
             {
-                UnityEngine.Object.Destroy(mits[(loadingLogo, depth, color)]);
+                UnityEngine.Object.Destroy(mits[(loadingLogo, depth, color)].material);
                 mits.Remove((loadingLogo, depth, color));
                 CreateNewMit();
             });
         };
-        loadingLogo.OnDispose += (mit) => {
+        loadingLogo.OnDispose += (mit) =>
+        {
             EngineRunner._.RunonMainThread(() =>
             {
-                UnityEngine.Object.Destroy(mits[(loadingLogo, depth, color)]);
+                UnityEngine.Object.Destroy(mits[(loadingLogo, depth, color)].material);
                 mits.Remove((loadingLogo, depth, color));
             });
         };
@@ -93,8 +99,8 @@ public class UnityMesh : IRMesh
 
         Vector2[] uv = new Vector2[4]
         {
-            new Vector2(1, -1),
-            new Vector2(0, -1),
+            new Vector2(1, 1),
+            new Vector2(0, 1),
             new Vector2(0, 0),
             new Vector2(1, 0)
         };
@@ -110,7 +116,7 @@ public class UnityMesh : IRMesh
 
     public void Draw(string id, object mesh, RMaterial loadingLogo, Matrix p, Colorf tint,int gueu)
     {
-        EngineRunner.Draw(id, (Mesh)mesh,MitManager.GetMitWithOffset(loadingLogo,gueu,tint), p);
+        EngineRunner.Draw(id, (Mesh)mesh,MitManager.GetMitWithOffset(loadingLogo,gueu,tint).material, p);
     }
 
     public void LoadMesh(RMesh meshtarget, IMesh rmesh)
@@ -137,7 +143,7 @@ public class UnityMesh : IRMesh
             normals[i] = new Vector3((float)vert.n.x, (float)vert.n.y, (float)vert.n.z);
             if (vert.bHaveUV && ((vert.uv?.Length ?? 0) > 0))
             {
-                uv[i] = new Vector3((float)vert.uv[0].x, -(float)vert.uv[0].y);
+                uv[i] = new Vector3((float)vert.uv[0].x, (float)vert.uv[0].y);
             }
             if (vert.bHaveC)
             {
