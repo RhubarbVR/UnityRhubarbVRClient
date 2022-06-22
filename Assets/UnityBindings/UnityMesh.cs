@@ -20,17 +20,7 @@ public static class MitManager
         }
         if (mits.ContainsKey((loadingLogo, depth, color)))
         {
-            var returndata = mits[(loadingLogo, depth, color)];
-            if(returndata is null)
-            {
-                RLog.Info("MitWAs Null");
-                mits.Remove((loadingLogo, depth, color));
-                return AddMit(loadingLogo, depth, color);
-            }
-            else
-            {
-                return returndata;
-            }
+            return mits[(loadingLogo, depth,color)];
         }
         else
         {
