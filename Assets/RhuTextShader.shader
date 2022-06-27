@@ -5,14 +5,14 @@ Shader "Rhu/RhuTextShader" {
     }
 
         SubShader{
-
+            Cull Off
             Tags {
-                "Queue" = "Transparent"
+                "Queue" = "Overlay+1000"
                 "IgnoreProjector" = "True"
                 "RenderType" = "Transparent"
                 "PreviewType" = "Plane"
             }
-            Lighting Off ZWrite On
+            Lighting Off ZWrite Off
             Blend SrcAlpha OneMinusSrcAlpha
 
             Pass {

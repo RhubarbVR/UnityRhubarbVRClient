@@ -37,6 +37,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 4211055905415812137}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: a1bede504eb133142b8f92ad3c7425ac,
@@ -96,6 +97,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8303352928453506203, guid: a1bede504eb133142b8f92ad3c7425ac,
         type: 3}
+      propertyPath: m_ReceiveShadows
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8303352928453506203, guid: a1bede504eb133142b8f92ad3c7425ac,
+        type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 3893ea92b45b6fe4bb5bfe4aaf77ad39, type: 2}
@@ -105,6 +111,9 @@ PrefabInstance:
       value: oculus_quest2_controller_left
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a1bede504eb133142b8f92ad3c7425ac, type: 3}
 --- !u!4 &2394127728698864393 stripped
 Transform:

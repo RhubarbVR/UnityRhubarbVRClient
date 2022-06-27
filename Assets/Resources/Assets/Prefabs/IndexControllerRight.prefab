@@ -37,6 +37,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 647718435576084021}
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 488a3078481164a408c74d6781184c7e,
@@ -96,6 +97,16 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -7053709478490975782, guid: 488a3078481164a408c74d6781184c7e,
         type: 3}
+      propertyPath: m_CastShadows
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -7053709478490975782, guid: 488a3078481164a408c74d6781184c7e,
+        type: 3}
+      propertyPath: m_ReceiveShadows
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -7053709478490975782, guid: 488a3078481164a408c74d6781184c7e,
+        type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 9dc1ecc45d7b5bc4da489dfb89e24a23, type: 2}
@@ -105,6 +116,9 @@ PrefabInstance:
       value: valve_controller_knu_1_0_right
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 488a3078481164a408c74d6781184c7e, type: 3}
 --- !u!4 &6184248753559678133 stripped
 Transform:

@@ -85,24 +85,32 @@ public class EngineRunner : MonoBehaviour
 
     IEnumerator Start()
     {
-        XRSettings.enabled = IsVREnabled;
-        IsMainThread = true;
-        _ = this;
-        yield return null;
-
-        var xrLoader = XRGeneralSettings.Instance.Manager.activeLoader;
-        var xrDisplay = xrLoader.GetLoadedSubsystem<XRDisplaySubsystem>();
-        if (!IsVREnabled)
+        if (!IsMainThread)
         {
-            XRGeneralSettings.Instance.Manager.StopSubsystems();
-            xrDisplay.Stop();
+            IsMainThread = true;
+            _ = this;
+        }
+        if (XRSettings.enabled)
+        {
+            XRSettings.enabled = IsVREnabled;
+            yield return null;
+            var xrLoader = XRGeneralSettings.Instance.Manager.activeLoader;
+            var xrDisplay = xrLoader.GetLoadedSubsystem<XRDisplaySubsystem>();
+            if (!IsVREnabled)
+            {
+                XRGeneralSettings.Instance.Manager.StopSubsystems();
+                xrDisplay.Stop();
+            }
         }
         var platform = Application.platform;
-        if(platform == RuntimePlatform.Android)
+        if (platform == RuntimePlatform.Android)
         {
             Debug.Log("Is on Android");
         }
-        isVR = isHardwarePresent() && IsVREnabled;
+        if (XRSettings.enabled)
+        {
+            isVR = isHardwarePresent() && IsVREnabled;
+        }
         if (!isVR)
         {
             Debug.Log("Starting RuhbarbVR ScreenMode");
@@ -249,16 +257,13 @@ public class EngineRunner : MonoBehaviour
         {
             return;
         }
-        MainThreadUpdate();
         var sens = speedMultply * Time.deltaTime;
         MouseDelta = new Vector2f(Input.GetAxis("Mouse X") * sens, -Input.GetAxis("Mouse Y") * sens);
         foreach (var item in tempObjects)
         {
             item.Value.UsedThisFrame = false;
         }
-        MainThreadUpdate();
         engine.Step();
-        MainThreadUpdate();
         var removethisframe = new List<string>();
         foreach (var item in tempObjects)
         {

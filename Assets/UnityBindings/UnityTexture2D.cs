@@ -184,6 +184,25 @@ public class UnityTexture2D : IRTexture2D
         });
     }
 
+    public void SetColors(object tex, int width, int height, Colorb[] rgbaData)
+    {
+        ((UnityTexture2DHolder)tex).Action((tex) =>
+        {
+            tex.Reinitialize(width, height);
+            tex.SetPixelData(rgbaData, 0);
+            tex.Apply();
+        });
+    }
+
+    public void Dispose(object tex)
+    {
+        ((UnityTexture2DHolder)tex).Action((texe) =>
+        {
+            UnityEngine.Object.Destroy(texe);
+            ((UnityTexture2DHolder)tex).texture = null;
+        });
+    }
+
     public UnityTexture2D(EngineRunner engineRunner)
     {
         EngineRunner = engineRunner;

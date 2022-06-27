@@ -10,7 +10,7 @@ using RhuEngine.Components;
 using RhuEngine.WorldObjects.ECS;
 using System.Linq;
 using RhuEngine.WorldObjects;
-
+    
 
 public class UIRender : RenderLinkBase<UICanvas>
 {
@@ -127,6 +127,10 @@ public class UnityMeshRender : RenderLinkBase<MeshRender>
     {
         EngineRunner._.RunonMainThread(() =>
         {
+            if(meshRenderer is null)
+            {
+                return;
+            }
             for (int i = 0; i < materials.Length; i++)
             {
                 UnityEngine.Object.Destroy(materials[i]);

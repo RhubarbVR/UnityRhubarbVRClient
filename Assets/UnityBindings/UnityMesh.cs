@@ -121,53 +121,56 @@ public class UnityMesh : IRMesh
 
     public void LoadMesh(RMesh meshtarget, IMesh rmesh)
     {
-        if(meshtarget.mesh is null)
+        EngineRunner._.RunonMainThread(() =>
         {
-            meshtarget.mesh = new Mesh();
-        }
-        Mesh mesh = (Mesh)meshtarget.mesh;
-        if (rmesh is null)
-        {
-            return;
-        }
-
-        var vertices = new Vector3[rmesh.VertexCount];
-        var normals = new Vector3[rmesh.VertexCount];
-        var uv = new Vector2[rmesh.VertexCount];
-        var colors = new Color[rmesh.VertexCount];
-
-        for (var i = 0; i < rmesh.VertexCount; i++)
-        {
-            var vert = rmesh.GetVertexAll(i);
-            vertices[i] = new Vector3((float)vert.v.x, (float)vert.v.y, (float)vert.v.z);
-            normals[i] = new Vector3((float)vert.n.x, (float)vert.n.y, (float)vert.n.z);
-            if (vert.bHaveUV && ((vert.uv?.Length ?? 0) > 0))
+            if (meshtarget.mesh is null)
             {
-                uv[i] = new Vector3((float)vert.uv[0].x, (float)vert.uv[0].y);
+                meshtarget.mesh = new Mesh();
             }
-            if (vert.bHaveC)
+            Mesh mesh = (Mesh)meshtarget.mesh;
+            if (rmesh is null)
             {
-                colors[i] = new Color(vert.c.x, vert.c.y, vert.c.z, 1);
+                return;
             }
-            else
+
+            var vertices = new Vector3[rmesh.VertexCount];
+            var normals = new Vector3[rmesh.VertexCount];
+            var uv = new Vector2[rmesh.VertexCount];
+            var colors = new Color[rmesh.VertexCount];
+
+            for (var i = 0; i < rmesh.VertexCount; i++)
             {
-                colors[i] = new Color(1, 1, 1, 1);
+                var vert = rmesh.GetVertexAll(i);
+                vertices[i] = new Vector3((float)vert.v.x, (float)vert.v.y, (float)vert.v.z);
+                normals[i] = new Vector3((float)vert.n.x, (float)vert.n.y, (float)vert.n.z);
+                if (vert.bHaveUV && ((vert.uv?.Length ?? 0) > 0))
+                {
+                    uv[i] = new Vector3((float)vert.uv[0].x, (float)vert.uv[0].y);
+                }
+                if (vert.bHaveC)
+                {
+                    colors[i] = new Color(vert.c.x, vert.c.y, vert.c.z, 1);
+                }
+                else
+                {
+                    colors[i] = new Color(1, 1, 1, 1);
+                }
             }
-        }
 
-        mesh.SetTriangles(Array.Empty<int>(), 0);
+            mesh.SetTriangles(Array.Empty<int>(), 0);
 
-        mesh.SetVertices(vertices);
+            mesh.SetVertices(vertices);
 
-        mesh.SetNormals(normals);
+            mesh.SetNormals(normals);
 
-        mesh.SetUVs(0, uv);
+            mesh.SetUVs(0, uv);
 
-        mesh.SetColors(colors);
+            mesh.SetColors(colors);
 
-        mesh.SetTriangles(rmesh.RenderIndices().ToArray(),0);
+            mesh.SetTriangles(rmesh.RenderIndices().ToArray(), 0);
 
-        mesh.RecalculateBounds();
+            mesh.RecalculateBounds();
+        });
     }
 
     public UnityMesh(EngineRunner engineRunner)
