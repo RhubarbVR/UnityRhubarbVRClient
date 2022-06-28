@@ -101,6 +101,10 @@ public class UnityTexture2D : IRTexture2D
 
     public object MakeFromColors(Colorb[] color, int width, int height, bool srgb)
     {
+        if(width <= 1 || height <= 1)
+        {
+            throw new InvalidOperationException("Width height Invalid");
+        }
         return new UnityTexture2DHolder(EngineRunner, () =>
         {
             var tex = new Texture2D(width, height, TextureFormat.RGBA32, true, !srgb);
