@@ -10,7 +10,7 @@ using RhuEngine.Components;
 using RhuEngine.WorldObjects.ECS;
 using System.Linq;
 using RhuEngine.WorldObjects;
-    
+
 
 public class UIRender : RenderLinkBase<UICanvas>
 {
@@ -48,7 +48,7 @@ public class TextRender : RenderLinkBase<WorldText>
 
     public override void Render()
     {
-        RenderingComponent.textRender.Render(RNumerics.Matrix.Identity, RenderingComponent.Entity.GlobalTrans);
+        RenderingComponent.textRender.Render(Matrix.S(0.1f), RenderingComponent.Entity.GlobalTrans);
     }
 
     public override void Started()
@@ -90,21 +90,26 @@ public class UnityMeshRender : RenderLinkBase<MeshRender>
         {
             meshFilter.mesh = null;
         }
-        else { 
+        else
+        {
             meshFilter.mesh = (Mesh)obj.mesh;
         }
     }
 
-    private void Entity_GlobalTransformChange(Entity obj,bool data)
+    private void Entity_GlobalTransformChange(Entity obj, bool data)
     {
-            var m = RenderingComponent.Entity.GlobalTrans;
-            var pos = m.Translation;
-            var rot = m.Rotation;
-            var scale = m.Scale;
-            gameObject.transform.localPosition = new Vector3(float.IsNaN(pos.x) ? 0 : pos.x, float.IsNaN(pos.y) ? 0 : pos.y, float.IsNaN(pos.z) ? 0 : pos.z);
-            gameObject.transform.localRotation = new Quaternion(float.IsNaN(rot.x) ? 0 : rot.x, float.IsNaN(rot.y) ? 0 : rot.y, float.IsNaN(rot.z) ? 0 : rot.z, float.IsNaN(rot.w) ? 0 : rot.w);
-            gameObject.transform.localScale = new Vector3(float.IsNaN(scale.x) ? 0 : scale.x, float.IsNaN(scale.y) ? 0 : scale.y, float.IsNaN(scale.z) ? 0 : scale.z);
-   }
+        if (gameObject is null)
+        {
+            return;
+        }
+        var m = RenderingComponent.Entity.GlobalTrans;
+        var pos = m.Translation;
+        var rot = m.Rotation;
+        var scale = m.Scale;
+        gameObject.transform.localPosition = new Vector3(float.IsNaN(pos.x) ? 0 : pos.x, float.IsNaN(pos.y) ? 0 : pos.y, float.IsNaN(pos.z) ? 0 : pos.z);
+        gameObject.transform.localRotation = new Quaternion(float.IsNaN(rot.x) ? 0 : rot.x, float.IsNaN(rot.y) ? 0 : rot.y, float.IsNaN(rot.z) ? 0 : rot.z, float.IsNaN(rot.w) ? 0 : rot.w);
+        gameObject.transform.localScale = new Vector3(float.IsNaN(scale.x) ? 0 : scale.x, float.IsNaN(scale.y) ? 0 : scale.y, float.IsNaN(scale.z) ? 0 : scale.z);
+    }
 
     private void ColorLinear_Changed(IChangeable obj)
     {
@@ -116,7 +121,7 @@ public class UnityMeshRender : RenderLinkBase<MeshRender>
                 if (materials[i] is not null)
                 {
                     var mit = ((UnityMaterialHolder)RenderingComponent.materials[i].Asset?.Target).material;
-                    materials[i].renderQueue = Math.Clamp(mit.renderQueue + RenderingComponent.OrderOffset.Value,-1000,5000);
+                    materials[i].renderQueue = Math.Clamp(mit.renderQueue + RenderingComponent.OrderOffset.Value, -1000, 5000);
                     materials[i].color = new Color(color.r, color.g, color.b, color.a);
                 }
             }
@@ -127,7 +132,7 @@ public class UnityMeshRender : RenderLinkBase<MeshRender>
     {
         EngineRunner._.RunonMainThread(() =>
         {
-            if(meshRenderer is null)
+            if (meshRenderer is null)
             {
                 return;
             }
@@ -135,12 +140,12 @@ public class UnityMeshRender : RenderLinkBase<MeshRender>
             {
                 UnityEngine.Object.Destroy(materials[i]);
             }
-            
+
             materials = new Material[RenderingComponent.materials.Count];
             for (int i = 0; i < RenderingComponent.materials.Count; i++)
             {
                 var mit = (UnityMaterialHolder)RenderingComponent.materials[i].Asset?.Target;
-                if(mit is not null)
+                if (mit is not null)
                 {
                     materials[i] = MitManager.GetMitWithOffset(RenderingComponent.materials[i].Asset, RenderingComponent.OrderOffset.Value, RenderingComponent.colorLinear.Value).material;
                 }

@@ -6,6 +6,8 @@ using RhuEngine.Linker;
 using System;
 using RNumerics;
 using System.Linq;
+using System.Threading.Tasks;
+
 public static class MitManager
 {
 
@@ -128,6 +130,7 @@ public class UnityMesh : IRMesh
                 meshtarget.mesh = new Mesh();
             }
             Mesh mesh = (Mesh)meshtarget.mesh;
+            mesh.SetTriangles(Array.Empty<int>(), 0);
             if (rmesh is null)
             {
                 return;
@@ -138,26 +141,24 @@ public class UnityMesh : IRMesh
             var uv = new Vector2[rmesh.VertexCount];
             var colors = new Color[rmesh.VertexCount];
 
-            for (var i = 0; i < rmesh.VertexCount; i++)
+            Parallel.For(0, rmesh.VertexCount, (i) =>
             {
                 var vert = rmesh.GetVertexAll(i);
                 vertices[i] = new Vector3((float)vert.v.x, (float)vert.v.y, (float)vert.v.z);
-                normals[i] = new Vector3((float)vert.n.x, (float)vert.n.y, (float)vert.n.z);
+                normals[i] = new Vector3(vert.n.x,vert.n.y,vert.n.z);
                 if (vert.bHaveUV && ((vert.uv?.Length ?? 0) > 0))
                 {
-                    uv[i] = new Vector3((float)vert.uv[0].x, (float)vert.uv[0].y);
+                    uv[i] = new Vector2(vert.uv[0].x, vert.uv[0].y);
                 }
                 if (vert.bHaveC)
                 {
-                    colors[i] = new Color(vert.c.x, vert.c.y, vert.c.z, 1);
+                    colors[i] = new Color(vert.c.x, vert.c.y, vert.c.z, 1f);
                 }
                 else
                 {
-                    colors[i] = new Color(1, 1, 1, 1);
+                    colors[i] = new Color(1f, 1f, 1f, 1f);
                 }
-            }
-
-            mesh.SetTriangles(Array.Empty<int>(), 0);
+            });
 
             mesh.SetVertices(vertices);
 

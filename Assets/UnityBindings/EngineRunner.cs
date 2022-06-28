@@ -87,6 +87,10 @@ public class EngineRunner : MonoBehaviour
     {
         if (!IsMainThread)
         {
+#if !UNITY_EDITOR
+            Thread.CurrentThread.Name = "Unity Main Thread";
+#endif
+            Thread.CurrentThread.Priority = System.Threading.ThreadPriority.Highest;
             IsMainThread = true;
             _ = this;
         }
@@ -127,6 +131,7 @@ public class EngineRunner : MonoBehaviour
         link = new UnityEngineLink(this);
         var args = Environment.GetCommandLineArgs();
         var appPath = Path.GetDirectoryName(Application.dataPath);
+        Debug.Log("App Path: " + appPath);
         engine = new Engine(link, args, cap, appPath);
         engine.Init();
     }
@@ -139,7 +144,7 @@ public class EngineRunner : MonoBehaviour
         public bool UsedThisFrame { get; set; }
     }
 
-    public class TempMesh:IRemoveLater
+    public class TempMesh : IRemoveLater
     {
         public bool UsedThisFrame { get; set; } = true;
 
@@ -154,7 +159,7 @@ public class EngineRunner : MonoBehaviour
 
         public void Reload(Mesh mesh, Material target, Matrix p)
         {
-            if(targetMit != target)
+            if (targetMit != target)
             {
                 targetMit = target;
             }
@@ -196,7 +201,7 @@ public class EngineRunner : MonoBehaviour
 
     public void Draw(string id, Mesh mesh, Material target, Matrix p)
     {
-        if(target is null)
+        if (target is null)
         {
             return;
         }
@@ -253,7 +258,7 @@ public class EngineRunner : MonoBehaviour
 
     void Update()
     {
-        if(engine is null)
+        if (engine is null)
         {
             return;
         }

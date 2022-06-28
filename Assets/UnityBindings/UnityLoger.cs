@@ -26,7 +26,7 @@ public class UnityLoger : IRLog
         switch (level)
         {
             case LogLevel.Diagnostic:
-                Debug.Log("Diagnostic: "+v);
+                Debug.Log("Diagnostic: " + v);
                 break;
             case LogLevel.Warning:
                 Debug.LogWarning(v);
@@ -38,13 +38,14 @@ public class UnityLoger : IRLog
                 Debug.Log(v);
                 break;
         }
-        callback?.Invoke(level, v);
+        callback?.Invoke(level,$"[{level.ToString().ToLower()}] " + v + "\n");
     }
 
     event Action<LogLevel, string> callback;
 
     public void Subscribe(Action<LogLevel, string> logCall)
     {
+        Debug.Log("Bound in");
         callback += logCall;
     }
 
