@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 public static class MitManager
 {
 
-    public static Dictionary<(RMaterial, int,Colorf), UnityMaterialHolder> mits = new Dictionary<(RMaterial, int, Colorf), UnityMaterialHolder>();
+    public static Dictionary<(RMaterial, int, Colorf), UnityMaterialHolder> mits = new Dictionary<(RMaterial, int, Colorf), UnityMaterialHolder>();
 
     public static UnityMaterialHolder GetMitWithOffset(RMaterial loadingLogo, int depth, Colorf color)
     {
@@ -22,19 +22,19 @@ public static class MitManager
         }
         if (mits.ContainsKey((loadingLogo, depth, color)))
         {
-            return mits[(loadingLogo, depth,color)];
+            return mits[(loadingLogo, depth, color)];
         }
         else
         {
-            return AddMit(loadingLogo, depth,color);
+            return AddMit(loadingLogo, depth, color);
         }
     }
 
-    public static UnityMaterialHolder AddMit(RMaterial loadingLogo, int depth,Colorf color)
+    public static UnityMaterialHolder AddMit(RMaterial loadingLogo, int depth, Colorf color)
     {
         UnityMaterialHolder CreateNewMit()
         {
-            var miter =  new UnityMaterialHolder(EngineRunner._, ()=>
+            var miter = new UnityMaterialHolder(EngineRunner._, () =>
             {
                 var mit = (UnityMaterialHolder)loadingLogo?.Target;
                 var e = new Material(mit.material);
@@ -72,7 +72,7 @@ public class UnityMesh : IRMesh
 {
     public static Mesh MakeQuad()
     {
-        Mesh mesh = new Mesh();
+        Mesh mesh = new();
 
         Vector3[] vertices = new Vector3[4]
         {
@@ -112,65 +112,76 @@ public class UnityMesh : IRMesh
 
     public Mesh LoadedQuad = MakeQuad();
 
-    public RMesh Quad => new (LoadedQuad);
+    public RMesh Quad => new(LoadedQuad);
 
     public EngineRunner EngineRunner { get; }
 
-    public void Draw(string id, object mesh, RMaterial loadingLogo, Matrix p, Colorf tint,int gueu)
+    public void Draw(string id, object mesh, RMaterial loadingLogo, Matrix p, Colorf tint, int gueu)
     {
-        EngineRunner.Draw(id, (Mesh)mesh,MitManager.GetMitWithOffset(loadingLogo,gueu,tint).material, p);
+        EngineRunner.Draw(id, (Mesh)mesh, MitManager.GetMitWithOffset(loadingLogo, gueu, tint).material, p);
     }
 
     public void LoadMesh(RMesh meshtarget, IMesh rmesh)
     {
         EngineRunner._.RunonMainThread(() =>
         {
-            if (meshtarget.mesh is null)
+            try
             {
-                meshtarget.mesh = new Mesh();
+                if (meshtarget.mesh is null)
+                {
+                    meshtarget.mesh = new Mesh();
+                }
+                Mesh mesh = (Mesh)meshtarget.mesh;
+                mesh.Clear();
+                if (rmesh is null)
+                {
+                    return;
+                }
+                if (rmesh.VertexCount == 0)
+                {
+                    return;
+                }
+                var vertices = new Vector3[rmesh.VertexCount];
+                var normals = new Vector3[rmesh.VertexCount];
+                var uv = new Vector2[rmesh.VertexCount];
+                var colors = new Color[rmesh.VertexCount];
+
+                Parallel.For(0, rmesh.VertexCount, (i) =>
+                 {
+
+                     var vert = rmesh.GetVertexAll(i);
+                     vertices[i] = new Vector3((float)vert.v.x, (float)vert.v.y, (float)vert.v.z);
+                     normals[i] = new Vector3(vert.n.x, vert.n.y, vert.n.z);
+                     if (vert.bHaveUV && ((vert.uv?.Length ?? 0) > 0))
+                     {
+                         uv[i] = new Vector2(vert.uv[0].x, vert.uv[0].y);
+                     }
+                     if (vert.bHaveC)
+                     {
+                         colors[i] = new Color(vert.c.x, vert.c.y, vert.c.z, 1f);
+                     }
+                     else
+                     {
+                         colors[i] = new Color(1f, 1f, 1f, 1f);
+                     }
+                 });
+
+                mesh.SetVertices(vertices);
+
+                mesh.SetNormals(normals);
+
+                mesh.SetUVs(0, uv);
+
+                mesh.SetColors(colors);
+
+                mesh.SetTriangles(rmesh.RenderIndices().ToArray(), 0);
+
+                mesh.RecalculateBounds();
             }
-            Mesh mesh = (Mesh)meshtarget.mesh;
-            mesh.SetTriangles(Array.Empty<int>(), 0);
-            if (rmesh is null)
+            catch
             {
-                return;
+                RLog.Err("Mesh Update Failed");
             }
-
-            var vertices = new Vector3[rmesh.VertexCount];
-            var normals = new Vector3[rmesh.VertexCount];
-            var uv = new Vector2[rmesh.VertexCount];
-            var colors = new Color[rmesh.VertexCount];
-
-            Parallel.For(0, rmesh.VertexCount, (i) =>
-            {
-                var vert = rmesh.GetVertexAll(i);
-                vertices[i] = new Vector3((float)vert.v.x, (float)vert.v.y, (float)vert.v.z);
-                normals[i] = new Vector3(vert.n.x,vert.n.y,vert.n.z);
-                if (vert.bHaveUV && ((vert.uv?.Length ?? 0) > 0))
-                {
-                    uv[i] = new Vector2(vert.uv[0].x, vert.uv[0].y);
-                }
-                if (vert.bHaveC)
-                {
-                    colors[i] = new Color(vert.c.x, vert.c.y, vert.c.z, 1f);
-                }
-                else
-                {
-                    colors[i] = new Color(1f, 1f, 1f, 1f);
-                }
-            });
-
-            mesh.SetVertices(vertices);
-
-            mesh.SetNormals(normals);
-
-            mesh.SetUVs(0, uv);
-
-            mesh.SetColors(colors);
-
-            mesh.SetTriangles(rmesh.RenderIndices().ToArray(), 0);
-
-            mesh.RecalculateBounds();
         });
     }
 

@@ -144,6 +144,7 @@
     "Programs.FileExplorer.Path": "Path",
     "Programs.CreateNewWorld.Name": "Create New World",
     "Programs.Terminal.Name": "Terminal",
-
+    "Actions.ChangeVR.Enable": "Enter VR",
+    "Actions.ChangeVR.Disable": "Leave VR"
   }
 }

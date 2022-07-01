@@ -28,15 +28,30 @@ public class UnityEngineLink : IEngineLink
 
     public bool ForceLibLoad => true;
 
-    public bool InVR => EngineRunner.isVR;
+    public bool InVR => EngineRunner.isInVR;
+
+    public bool LiveVRChange => true;
+
+    public Type RenderSettingsType => typeof(UnityRenderSettings);
+
+    public event Action<bool> VRChange;
+
+    RhuEngine.Engine Engine;
 
     public void BindEngine(RhuEngine.Engine engine)
     {
+        Engine = engine;
         RLog.Instance = new UnityLoger();
+    }
+
+    public void ChangeVR(bool value)
+    {
+        EngineRunner.ChangeVR(value);
     }
 
     public void LoadStatics()
     {
+        EngineRunner.OnVRChange += (change) => VRChange?.Invoke(change);
         ClipboardService.OverRide = new UnityClipBoardOverride();
         RTexture2D.Instance = new UnityTexture2D(EngineRunner);
         RMaterial.Instance = new UnityMaterial(EngineRunner);
@@ -53,6 +68,11 @@ public class UnityEngineLink : IEngineLink
 
     public void Start()
     {
+        EngineRunner.ChangeVR(!Engine._forceFlatscreen);
+    }
 
+    public void ChangeVRState(bool isInVR)
+    {
+        VRChange?.Invoke(isInVR);
     }
 }

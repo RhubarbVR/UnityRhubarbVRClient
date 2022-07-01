@@ -14,6 +14,8 @@ public class UnityRenderer : IRRenderer
     }
 
     public EngineRunner EngineRunner { get; }
+    public float MinClip { get => EngineRunner.Camera.nearClipPlane; set => EngineRunner.Camera.nearClipPlane = value; }
+    public float FarClip { get => EngineRunner.Camera.farClipPlane; set => EngineRunner.Camera.farClipPlane = value; }
 
     public Matrix GetCameraRootMatrix()
     {

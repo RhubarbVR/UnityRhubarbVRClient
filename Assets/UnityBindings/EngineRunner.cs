@@ -79,11 +79,88 @@ public class EngineRunner : MonoBehaviour
     public OutputCapture cap;
     public UnityEngineLink link;
 
-    public bool isVR = false;
+    public bool isInVR = false;
 
-    public bool IsVREnabled = false;
+    public bool StartInVR = false;
 
-    IEnumerator Start()
+    public void ChangeVR(bool value)
+    {
+        if (value)
+        {
+            try
+            {
+                Debug.Log("Starting VR");
+                XRSettings.enabled = true;
+                XRGeneralSettings.Instance.Manager.InitializeLoaderSync();
+                XRGeneralSettings.Instance.Manager.StartSubsystems();
+                var xrLoader = XRGeneralSettings.Instance.Manager.activeLoader;
+                var xrDisplay = xrLoader.GetLoadedSubsystem<XRDisplaySubsystem>();
+                xrDisplay.Start();
+                Debug.Log("Started VR System");
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Failed to Start VR Error: {e}");
+            }
+        }
+        else
+        {
+            try
+            {
+                Debug.Log("Stopping VR");
+                XRSettings.enabled = false;
+                XRGeneralSettings.Instance.Manager.StopSubsystems();
+                XRGeneralSettings.Instance.Manager.DeinitializeLoader();
+                var xrLoader = XRGeneralSettings.Instance.Manager?.activeLoader;
+                var xrDisplay = xrLoader?.GetLoadedSubsystem<XRDisplaySubsystem>();
+                xrDisplay?.Stop();
+                Debug.Log("Stopped VR");
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Failed to Stop VR Error: {e}");
+            }
+        }
+        VRUpdate();
+    }
+
+    public void VRUpdate()
+    {
+        if (XRSettings.enabled)
+        {
+            isInVR = isHardwarePresent();
+            if (isInVR)
+            {
+                Debug.Log("Had VR Headset");
+            }
+            else
+            {
+                Debug.Log("Didn't Detect VR Headset");
+            }
+        }
+        else
+        {
+            isInVR = false;
+        }
+        if (isInVR)
+        {
+            LeftController.SetActive(true);
+            RightController.SetActive(true);
+        }
+        else
+        {
+            UserHead.transform.localPosition = Vector3.zero;
+            UserHead.transform.localRotation = Quaternion.identity;
+            UserHead.transform.localScale = Vector3.one;
+            CameraOffset.transform.localPosition = Vector3.zero;
+            LeftController.SetActive(false);
+            RightController.SetActive(false);
+            engine.MainSettings.RenderSettings.RenderSettingsChange?.Invoke();
+        }
+        link.ChangeVRState(isInVR);
+    }
+
+    void Start()
     {
         if (!IsMainThread)
         {
@@ -94,33 +171,15 @@ public class EngineRunner : MonoBehaviour
             IsMainThread = true;
             _ = this;
         }
-        if (XRSettings.enabled)
-        {
-            XRSettings.enabled = IsVREnabled;
-            yield return null;
-            var xrLoader = XRGeneralSettings.Instance.Manager.activeLoader;
-            var xrDisplay = xrLoader.GetLoadedSubsystem<XRDisplaySubsystem>();
-            if (!IsVREnabled)
-            {
-                XRGeneralSettings.Instance.Manager.StopSubsystems();
-                xrDisplay.Stop();
-            }
-        }
         var platform = Application.platform;
         if (platform == RuntimePlatform.Android)
         {
             Debug.Log("Is on Android");
         }
-        if (XRSettings.enabled)
-        {
-            isVR = isHardwarePresent() && IsVREnabled;
-        }
-        if (!isVR)
+
+        if (!isInVR)
         {
             Debug.Log("Starting RuhbarbVR ScreenMode");
-            CameraOffset.transform.localPosition = Vector3.zero;
-            LeftController.SetActive(false);
-            RightController.SetActive(false);
         }
         else
         {
@@ -129,10 +188,14 @@ public class EngineRunner : MonoBehaviour
         Debug.Log("Graphics Memory Size: " + SystemInfo.graphicsMemorySize);
         cap = new OutputCapture();
         link = new UnityEngineLink(this);
-        var args = Environment.GetCommandLineArgs();
+        var args = new List<string>(Environment.GetCommandLineArgs());
+        if (!StartInVR)
+        {
+            args.Add("--no-vr");
+        }
         var appPath = Path.GetDirectoryName(Application.dataPath);
         Debug.Log("App Path: " + appPath);
-        engine = new Engine(link, args, cap, appPath);
+        engine = new Engine(link, args.ToArray(), cap, appPath);
         engine.Init();
     }
 
@@ -229,6 +292,7 @@ public class EngineRunner : MonoBehaviour
 
     public float speedMultply = 200f;
     public Texture LoadingTexture;
+    public event Action<bool> OnVRChange;
 
     public void InputDevices_Update(InputDevice inputDevice)
     {
@@ -256,14 +320,16 @@ public class EngineRunner : MonoBehaviour
         }
     }
 
+
     void Update()
     {
+        MainThreadUpdate();
         if (engine is null)
         {
             return;
         }
-        var sens = speedMultply * Time.deltaTime;
-        MouseDelta = new Vector2f(Input.GetAxis("Mouse X") * sens, -Input.GetAxis("Mouse Y") * sens);
+        var calculatedDelta = UnityEngine.InputSystem.Mouse.current.delta.ReadValue();
+        MouseDelta = new Vector2f(calculatedDelta.x * speedMultply, calculatedDelta.y * -speedMultply);
         foreach (var item in tempObjects)
         {
             item.Value.UsedThisFrame = false;
@@ -282,6 +348,5 @@ public class EngineRunner : MonoBehaviour
         {
             tempObjects.Remove(item);
         }
-        MainThreadUpdate();
     }
 }
