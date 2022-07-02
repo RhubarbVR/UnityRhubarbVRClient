@@ -196,6 +196,13 @@ public class EngineRunner : MonoBehaviour
         var appPath = Path.GetDirectoryName(Application.dataPath);
         Debug.Log("App Path: " + appPath);
         engine = new Engine(link, args.ToArray(), cap, appPath);
+        engine.OnCloseEngine += () =>
+        {
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#endif
+            Application.Quit();
+        };
         engine.Init();
     }
 
