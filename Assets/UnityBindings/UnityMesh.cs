@@ -179,12 +179,12 @@ public class UnityMesh : IRMesh
                         }
                     }
                     var colorAmount = 0;
-                    if(complexMesh.Colors.Length > 0)
+                    if (complexMesh.Colors.Length > 0)
                     {
                         colorAmount = complexMesh.Colors[0].Count;
                     }
                     var ccolors = new Color[colorAmount];
-                    if(complexMesh.Colors.Length > 0)
+                    if (complexMesh.Colors.Length > 0)
                     {
                         Parallel.For(0, complexMesh.Colors[0].Count, (i) =>
                         {
@@ -202,13 +202,129 @@ public class UnityMesh : IRMesh
                     mesh.SetColors(ccolors);
                     if (complexMesh.HasBones)
                     {
-                        //Todo: LoadBoneData
-                        throw new NotImplementedException();
+                        var BoneWights = new BoneWeight[complexMesh.BonesCount];
+                        float GetCurrentBoneWeight(int currentBone, int index)
+                        {
+                            return index switch
+                            {
+                                0 => BoneWights[currentBone].weight0,
+                                1 => BoneWights[currentBone].weight1,
+                                2 => BoneWights[currentBone].weight2,
+                                3 => BoneWights[currentBone].weight3,
+                                _ => throw new NotSupportedException(),
+                            };
+                        }
+                        Parallel.ForEach(complexMesh.Bones, (Bone, _, BoneIndex) =>
+                        {
+                            var vertweights = Bone.VertexWeights.ToArray();
+                            for (int i = 0; i < vertweights.Length; i++)
+                            {
+                                var currentBone = (int)BoneIndex;
+                                var weight = vertweights[i].Weight;
+                                int largest = -1;
+                                float weighMaxCheck = float.MaxValue;
+                                for (int currentWeght = 0; currentWeght < 4; currentWeght++)
+                                {
+                                    float weight2 = GetCurrentBoneWeight(currentBone, currentWeght);
+                                    if (weight2 < weighMaxCheck)
+                                    {
+                                        weighMaxCheck = weight2;
+                                        largest = currentWeght;
+                                    }
+                                }
+                                if (weight > weighMaxCheck)
+                                {
+                                    switch (largest)
+                                    {
+                                        case 0:
+                                            BoneWights[currentBone].boneIndex0 = currentBone;
+                                            BoneWights[currentBone].weight0 = weight;
+                                            break;
+                                        case 1:
+                                            BoneWights[currentBone].boneIndex1 = currentBone;
+                                            BoneWights[currentBone].weight1 = weight;
+                                            break;
+                                        case 2:
+                                            BoneWights[currentBone].boneIndex2 = currentBone;
+                                            BoneWights[currentBone].weight2 = weight;
+                                            break;
+                                        case 3:
+                                            BoneWights[currentBone].boneIndex3 = currentBone;
+                                            BoneWights[currentBone].weight3 = weight;
+                                            break;
+                                    }
+                                }
+                            }
+                        });
+                        mesh.boneWeights = BoneWights;
                     }
                     if (complexMesh.HasMeshAttachments)
                     {
-                        //Todo: AddShapeKeys
-                        throw new NotImplementedException();
+                        mesh.ClearBlendShapes();
+                        foreach (var item in complexMesh.MeshAttachments)
+                        {
+                            var svertices = new Vector3[item.Vertices.Count];
+                            Parallel.For(0, item.Vertices.Count, (i) =>
+                            {
+                                svertices[i] = cvertices[i] - new Vector3(item.Vertices[i].x, item.Vertices[i].y, item.Vertices[i].z);
+                            });
+                            var snormals = new Vector3[item.Normals.Count];
+                            Parallel.For(0, item.Normals.Count, (i) =>
+                            {
+                                snormals[i] = cnormals[i] - new Vector3(item.Normals[i].x, item.Normals[i].y, item.Normals[i].z);
+                            });
+                            var stangents = new Vector3[complexMesh.Tangents.Count];
+                            Parallel.For(0, complexMesh.Tangents.Count, (i) =>
+                            {
+                                var tangent = item.Tangents[i];
+                                stangents[i] = new Vector3(ctangents[i].x - tangent.x, ctangents[i].y - tangent.y, ctangents[i].z - tangent.z);
+                            });
+                            mesh.AddBlendShapeFrame(item.Name, item.Weight, svertices, snormals, stangents);
+                        }
+                    }
+                    var indexCount = 0;
+                    switch (complexMesh.PrimitiveType)
+                    {
+                        case RPrimitiveType.Point:
+                            indexCount = 1;
+                            break;
+                        case RPrimitiveType.Line:
+                            indexCount = 2;
+                            break;
+                        case RPrimitiveType.Triangle:
+                            indexCount = 3;
+                            break;
+                        case RPrimitiveType.Polygon:
+                            indexCount = 4;
+                            break;
+                        default:
+                            RLog.Err("Multi Primitives Are not supported in Unity");
+                            return;
+                    }
+                    var indexs = new int[complexMesh.TriangleCount * indexCount];
+                    Parallel.ForEach(complexMesh.Faces, (Face, _, index) => {
+                        var indexStart = index * indexCount;
+                        for (int i = 0; i < indexCount; i++)
+                        {
+                            indexs[indexStart + i] = Face.Indices[i];
+                        }
+                    });
+                    switch (complexMesh.PrimitiveType)
+                    {
+                        case RPrimitiveType.Point:
+                            mesh.SetIndices(indexs, MeshTopology.Points, 0);
+                            break;
+                        case RPrimitiveType.Line:
+                            mesh.SetIndices(indexs, MeshTopology.Lines, 0);
+                            break;
+                        case RPrimitiveType.Triangle:
+                            mesh.SetIndices(indexs, MeshTopology.Triangles, 0);
+                            break;
+                        case RPrimitiveType.Polygon:
+                            mesh.SetIndices(indexs, MeshTopology.Quads, 0);
+                            break;
+                        default:
+                            break;
                     }
                     return;
                 }
