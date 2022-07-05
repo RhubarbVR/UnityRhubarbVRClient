@@ -7,13 +7,11 @@ Shader "Rhu/RhuUnlit" {
         SubShader{
 
             Tags {
-                "Queue" = "Transparent"
                 "IgnoreProjector" = "True"
-                "RenderType" = "Transparent"
                 "PreviewType" = "Plane"
             }
             Lighting Off ZWrite On
-            Blend SrcAlpha OneMinusSrcAlpha
+            Blend Off
 
             Pass {
                 CGPROGRAM

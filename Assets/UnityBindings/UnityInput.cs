@@ -135,6 +135,63 @@ public class UnityInput : IRInput
             }
         }
 
+        public class DoubleVRKeyPress : IKeyPress
+        {
+            public DoubleVRKeyPress(InputFeatureUsage<bool> key, InputFeatureUsage<bool> key2, Handed handed, EngineRunner engineRunner)
+            {
+                Key = key;
+                Key2 = key2;
+                Handed = handed;
+                EngineRunner = engineRunner;
+            }
+            public InputFeatureUsage<bool> Key2 { get; }
+
+            public InputFeatureUsage<bool> Key { get; }
+            public Handed Handed { get; }
+            public EngineRunner EngineRunner { get; }
+
+            public bool IsActive()
+            {
+                EngineRunner.left.TryGetFeatureValue(Key, out var val_L);
+                EngineRunner.left.TryGetFeatureValue(Key2, out var val_L2);
+                val_L |= val_L2;
+                EngineRunner.right.TryGetFeatureValue(Key, out var val_R);
+                EngineRunner.right.TryGetFeatureValue(Key2, out var val_R2);
+                val_R |= val_R2;
+                switch (Handed)
+                {
+                    case Handed.Left:
+                        return val_L;
+                    case Handed.Right:
+                        return val_R;
+                    case Handed.Max:
+                        return val_L | val_R;
+                    default:
+                        break;
+                }
+                return false;
+            }
+
+            public bool IsJustActive()
+            {
+                //todo make only run at start of frame
+                EngineRunner.left.TryGetFeatureValue(Key, out var val_L);
+                EngineRunner.right.TryGetFeatureValue(Key, out var val_R);
+                switch (Handed)
+                {
+                    case Handed.Left:
+                        return val_L;
+                    case Handed.Right:
+                        return val_R;
+                    case Handed.Max:
+                        return val_L | val_R;
+                    default:
+                        break;
+                }
+                return false;
+            }
+        }
+
         public class VRKeyPress : IKeyPress
         {
             public VRKeyPress(InputFeatureUsage<bool> key, Handed handed, EngineRunner engineRunner)
@@ -189,7 +246,7 @@ public class UnityInput : IRInput
 
         public IKeyPress StickClick => new VRKeyPress(CommonUsages.primary2DAxisClick, Handed, EngineRunner);
 
-        public IKeyPress X1 => new VRKeyPress(CommonUsages.primaryButton, Handed, EngineRunner);
+        public IKeyPress X1 => new DoubleVRKeyPress(CommonUsages.menuButton, CommonUsages.primaryButton, Handed, EngineRunner);
 
         public IKeyPress X2 => new VRKeyPress(CommonUsages.secondaryButton, Handed, EngineRunner);
 

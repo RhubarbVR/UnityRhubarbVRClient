@@ -12,9 +12,35 @@ using System.Diagnostics;
 using Debug = UnityEngine.Debug;
 using UnityEngine.XR.Management;
 using System.Text;
+using UnityEngine.Events;
 
 public class EngineRunner : MonoBehaviour
 {
+
+    public GameObject TouchCanvas;
+
+    public FixedJoystick Left;
+
+    public FixedJoystick Right;
+
+    public void ClickScreen()
+    {
+        RInput.ingectedkeys.Add(Key.MouseRight, new RInput.InjectKey(true, true));
+        RWorld.ExecuteOnEndOfFrame(() =>
+        {
+            RInput.ingectedkeys.Remove(Key.MouseRight);
+        });
+    }
+    public void DashOpen()
+    {
+        RInput.ingectedkeys.Add(Key.Ctrl, new RInput.InjectKey(true,true));
+        RInput.ingectedkeys.Add(Key.Space, new RInput.InjectKey(true, true));
+        RWorld.ExecuteOnEndOfFrame(() =>
+        {
+            RInput.ingectedkeys.Remove(Key.Ctrl);
+            RInput.ingectedkeys.Remove(Key.Space);
+        });
+    }
 
     [ThreadStatic]
     public static bool IsMainThread = false;
@@ -49,7 +75,7 @@ public class EngineRunner : MonoBehaviour
     public GameObject LeftController;
 
     public GameObject RightController;
-
+    public Shader PBRShader;
     public Shader Unlit;
     public Shader UnlitTransparentAdditive;
     public Shader UnlitTransparentBlend;
@@ -85,43 +111,46 @@ public class EngineRunner : MonoBehaviour
 
     public void ChangeVR(bool value)
     {
-        if (value)
+        RunonMainThread(() =>
         {
-            try
+            if (value)
             {
-                Debug.Log("Starting VR");
-                XRSettings.enabled = true;
-                XRGeneralSettings.Instance.Manager.InitializeLoaderSync();
-                XRGeneralSettings.Instance.Manager.StartSubsystems();
-                var xrLoader = XRGeneralSettings.Instance.Manager.activeLoader;
-                var xrDisplay = xrLoader.GetLoadedSubsystem<XRDisplaySubsystem>();
-                xrDisplay.Start();
-                Debug.Log("Started VR System");
+                try
+                {
+                    Debug.Log("Starting VR");
+                    XRSettings.enabled = true;
+                    XRGeneralSettings.Instance.Manager.InitializeLoaderSync();
+                    XRGeneralSettings.Instance.Manager.StartSubsystems();
+                    var xrLoader = XRGeneralSettings.Instance.Manager.activeLoader;
+                    var xrDisplay = xrLoader.GetLoadedSubsystem<XRDisplaySubsystem>();
+                    xrDisplay?.Start();
+                    Debug.Log("Started VR System");
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"Failed to Start VR Error: {e}");
+                }
             }
-            catch (Exception e)
+            else
             {
-                Debug.LogError($"Failed to Start VR Error: {e}");
+                try
+                {
+                    Debug.Log("Stopping VR");
+                    XRSettings.enabled = false;
+                    XRGeneralSettings.Instance.Manager.StopSubsystems();
+                    XRGeneralSettings.Instance.Manager.DeinitializeLoader();
+                    var xrLoader = XRGeneralSettings.Instance.Manager?.activeLoader;
+                    var xrDisplay = xrLoader?.GetLoadedSubsystem<XRDisplaySubsystem>();
+                    xrDisplay?.Stop();
+                    Debug.Log("Stopped VR");
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"Failed to Stop VR Error: {e}");
+                }
             }
-        }
-        else
-        {
-            try
-            {
-                Debug.Log("Stopping VR");
-                XRSettings.enabled = false;
-                XRGeneralSettings.Instance.Manager.StopSubsystems();
-                XRGeneralSettings.Instance.Manager.DeinitializeLoader();
-                var xrLoader = XRGeneralSettings.Instance.Manager?.activeLoader;
-                var xrDisplay = xrLoader?.GetLoadedSubsystem<XRDisplaySubsystem>();
-                xrDisplay?.Stop();
-                Debug.Log("Stopped VR");
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"Failed to Stop VR Error: {e}");
-            }
-        }
-        VRUpdate();
+            VRUpdate();
+        });
     }
 
     public void VRUpdate()
@@ -155,12 +184,16 @@ public class EngineRunner : MonoBehaviour
             CameraOffset.transform.localPosition = Vector3.zero;
             LeftController.SetActive(false);
             RightController.SetActive(false);
-            engine.MainSettings.RenderSettings.RenderSettingsChange?.Invoke();
+            try
+            {
+                engine.MainSettings.RenderSettings.RenderSettingsChange?.Invoke();
+            }
+            catch { }
         }
         link.ChangeVRState(isInVR);
     }
 
-    void Start()
+    IEnumerator Start()
     {
         if (!IsMainThread)
         {
@@ -175,6 +208,15 @@ public class EngineRunner : MonoBehaviour
         if (platform == RuntimePlatform.Android)
         {
             Debug.Log("Is on Android");
+            ChangeVR(true);
+            if (isInVR)
+            {
+                Destroy(TouchCanvas);
+            }
+        }
+        else
+        {
+            Destroy(TouchCanvas);
         }
 
         if (!isInVR)
@@ -188,6 +230,7 @@ public class EngineRunner : MonoBehaviour
         Debug.Log("Graphics Memory Size: " + SystemInfo.graphicsMemorySize);
         cap = new OutputCapture();
         link = new UnityEngineLink(this);
+        link.LiveVRChange = platform.ToString().Contains("Windows");
         var args = new List<string>(Environment.GetCommandLineArgs());
         if (!StartInVR)
         {
@@ -195,7 +238,9 @@ public class EngineRunner : MonoBehaviour
         }
         var appPath = Path.GetDirectoryName(Application.dataPath);
         Debug.Log("App Path: " + appPath);
+        yield return null;
         engine = new Engine(link, args.ToArray(), cap, appPath);
+        yield return null;
         engine.OnCloseEngine += () =>
         {
 #if UNITY_EDITOR
@@ -227,13 +272,14 @@ public class EngineRunner : MonoBehaviour
         Material targetMit;
 
 
-        public void Reload(Mesh mesh, Material target, Matrix p)
+        public void Reload(Mesh mesh, Material target, Matrix p, RenderLayer layer)
         {
             if (targetMit != target)
             {
                 targetMit = target;
             }
             UsedThisFrame = true;
+            meshRenderer.renderingLayerMask = (uint)layer;
             meshRenderer.material = target;
             meshfilter.mesh = mesh;
             var pos = p.Translation;
@@ -244,12 +290,13 @@ public class EngineRunner : MonoBehaviour
             gameObject.transform.localScale = new Vector3(float.IsNaN(scale.x) ? 0 : scale.x, float.IsNaN(scale.y) ? 0 : scale.y, float.IsNaN(scale.z) ? 0 : scale.z);
         }
 
-        public TempMesh(string id, Mesh mesh, Material target, Matrix p)
+        public TempMesh(string id, Mesh mesh, Material target, Matrix p, RenderLayer layer)
         {
             targetMit = target;
             gameObject = new GameObject("TempMesh" + id);
             gameObject.transform.parent = EngineRunner._.Root.transform;
             meshRenderer = gameObject.AddComponent<MeshRenderer>();
+            meshRenderer.renderingLayerMask = (uint)layer;
             meshRenderer.material = target;
             meshfilter = gameObject.AddComponent<MeshFilter>();
             meshfilter.mesh = mesh;
@@ -269,7 +316,7 @@ public class EngineRunner : MonoBehaviour
 
     public Dictionary<string, IRemoveLater> tempObjects = new();
 
-    public void Draw(string id, Mesh mesh, Material target, Matrix p)
+    public void Draw(string id, Mesh mesh, Material target, Matrix p, RenderLayer layer)
     {
         if (target is null)
         {
@@ -278,11 +325,11 @@ public class EngineRunner : MonoBehaviour
         id = "Mesh." + id;
         if (!tempObjects.ContainsKey(id))
         {
-            tempObjects.Add(id, new TempMesh(id, mesh, target, p));
+            tempObjects.Add(id, new TempMesh(id, mesh, target, p, layer));
         }
         else
         {
-            ((TempMesh)tempObjects[id]).Reload(mesh, target, p);
+            ((TempMesh)tempObjects[id]).Reload(mesh, target, p, layer);
         }
     }
     void MainThreadUpdate()
@@ -299,10 +346,12 @@ public class EngineRunner : MonoBehaviour
 
     public float speedMultply = 200f;
     public Texture LoadingTexture;
+
     public event Action<bool> OnVRChange;
 
     public void InputDevices_Update(InputDevice inputDevice)
     {
+        Camera.cullingMask = (int)RenderLayer.MainCam;
         var devices = new List<InputDevice>();
         InputDevices.GetDevices(devices);
         Debug.Log($"Devices Update Count:{devices.Count}");
@@ -336,6 +385,7 @@ public class EngineRunner : MonoBehaviour
             return;
         }
         var calculatedDelta = UnityEngine.InputSystem.Mouse.current.delta.ReadValue();
+        calculatedDelta += new Vector2(Right.Vertical, Right.Horizontal);
         MouseDelta = new Vector2f(calculatedDelta.x * speedMultply, calculatedDelta.y * -speedMultply);
         foreach (var item in tempObjects)
         {

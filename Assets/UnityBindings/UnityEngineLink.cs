@@ -22,7 +22,7 @@ public class UnityEngineLink : IEngineLink
 
     public bool CanInput => true;
 
-    public string BackendID => "Unity 2021";
+    public string BackendID => "Unity";
 
     public EngineRunner EngineRunner { get; }
 
@@ -30,15 +30,32 @@ public class UnityEngineLink : IEngineLink
 
     public bool InVR => EngineRunner.isInVR;
 
-    public bool LiveVRChange => true;
+    public bool LiveVRChange { get; set; }
 
     public Type RenderSettingsType => typeof(UnityRenderSettings);
 
+    public SupportedFancyFeatures SupportedFeatures => (
+                SupportedFancyFeatures.Basic |
+                SupportedFancyFeatures.Lighting |
+                SupportedFancyFeatures.GlobalIllumination |
+                SupportedFancyFeatures.MeshRenderShadowSettings |
+                SupportedFancyFeatures.LightCookie |
+                SupportedFancyFeatures.LightHalo |
+                SupportedFancyFeatures.NativeSkinnedMesheRender |
+                SupportedFancyFeatures.Camera |
+                SupportedFancyFeatures.ReflectionProbes |
+                SupportedFancyFeatures.BasicParticleSystem |
+                SupportedFancyFeatures.AdvancedParticleSystem |
+                SupportedFancyFeatures.PhysicalCamera |
+                SupportedFancyFeatures.CalledCameraRender |
+                SupportedFancyFeatures.LightProbeGroup
+        );
+
     public event Action<bool> VRChange;
 
-    RhuEngine.Engine Engine;
+    Engine Engine;
 
-    public void BindEngine(RhuEngine.Engine engine)
+    public void BindEngine(Engine engine)
     {
         Engine = engine;
         RLog.Instance = new UnityLoger();
@@ -68,11 +85,23 @@ public class UnityEngineLink : IEngineLink
 
     public void Start()
     {
-        EngineRunner.ChangeVR(!Engine._forceFlatscreen);
     }
 
     public void ChangeVRState(bool isInVR)
     {
         VRChange?.Invoke(isInVR);
+    }
+
+    public void LoadArgs()
+    {
+        if (Engine._forceFlatscreen)
+        {
+            EngineRunner.ChangeVR(false);
+        }
+        else
+        {
+            EngineRunner.ChangeVR(false);
+            EngineRunner.ChangeVR(true);
+        }
     }
 }

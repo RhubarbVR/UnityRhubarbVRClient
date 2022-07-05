@@ -116,9 +116,9 @@ public class UnityMesh : IRMesh
 
     public EngineRunner EngineRunner { get; }
 
-    public void Draw(string id, object mesh, RMaterial loadingLogo, Matrix p, Colorf tint, int gueu)
+    public void Draw(string id, object mesh, RMaterial loadingLogo, Matrix p, Colorf tint, int gueu, RenderLayer layer)
     {
-        EngineRunner.Draw(id, (Mesh)mesh, MitManager.GetMitWithOffset(loadingLogo, gueu, tint).material, p);
+        EngineRunner.Draw(id, (Mesh)mesh, MitManager.GetMitWithOffset(loadingLogo, gueu, tint).material, p, layer);
     }
 
     public void LoadMesh(RMesh meshtarget, IMesh rmesh)
