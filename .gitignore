@@ -73,3 +73,5 @@ crashlytics-build.properties
 WindowsBuild/*
 Cache/*
 WindowsBuild.7z
+RhuCookies
+settings.json

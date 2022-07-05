@@ -247,8 +247,34 @@ public class EngineRunner : MonoBehaviour
             UnityEditor.EditorApplication.isPlaying = false;
 #endif
             Application.Quit();
+            ProcessCleanup();
         };
         engine.Init();
+    }
+
+    private bool IsDisposeing { set; get; }
+
+    private void ProcessCleanup()
+    {
+        try
+        {
+            if (!IsDisposeing)
+            {
+                IsDisposeing = true;
+                Debug.Log("Rhubarb CleanUp Started");
+                engine.IsCloseing = true;
+                engine.Dispose();
+            }
+        }
+        catch {
+            Debug.Log("Failed to start Rhubarb CleanUp");
+        }
+    }
+
+    void OnDestroy()
+    {
+        Debug.Log("Destroy");
+        ProcessCleanup();
     }
 
     public interface IRemoveLater
