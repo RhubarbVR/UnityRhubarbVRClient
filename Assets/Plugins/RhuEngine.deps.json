@@ -1189,6 +1189,7 @@
       },
       "RNumerics/1.0.0": {
         "dependencies": {
+          "AssimpNet": "5.0.0-beta1",
           "MessagePack": "2.4.35",
           "Microsoft.CSharp": "4.7.0"
         },

@@ -120,6 +120,14 @@ public class UnityMesh : IRMesh
     {
         EngineRunner.Draw(id, (Mesh)mesh, MitManager.GetMitWithOffset(loadingLogo, gueu, tint).material, p, layer);
     }
+    static ulong MeshCount = 0;
+    public static ulong NextValue()
+    {
+        lock (typeof(UnityMesh))
+        {
+            return MeshCount++;
+        }
+    }
 
     public void LoadMesh(RMesh meshtarget, IMesh rmesh)
     {
@@ -130,6 +138,7 @@ public class UnityMesh : IRMesh
                 if (meshtarget.mesh is null)
                 {
                     meshtarget.mesh = new Mesh();
+                    ((Mesh)meshtarget.mesh).name = "BasicMesh." + NextValue();
                 }
                 Mesh mesh = (Mesh)meshtarget.mesh;
                 mesh.Clear();
@@ -139,6 +148,74 @@ public class UnityMesh : IRMesh
                 }
                 if (rmesh.VertexCount == 0)
                 {
+                    return;
+                }
+                if (rmesh is IComplexMesh complexMesh)
+                {
+                    var cvertices = new Vector3[complexMesh.Vertices.Count];
+                    Parallel.For(0, complexMesh.Vertices.Count, (i) =>
+                    {
+                        cvertices[i] = new Vector3(complexMesh.Vertices[i].x, complexMesh.Vertices[i].y, complexMesh.Vertices[i].z);
+                    });
+                    var cnormals = new Vector3[complexMesh.Normals.Count];
+                    Parallel.For(0, complexMesh.Normals.Count, (i) =>
+                    {
+                        cnormals[i] = new Vector3(complexMesh.Normals[i].x, complexMesh.Normals[i].y, complexMesh.Normals[i].z);
+                    });
+                    var ctangents = new Vector4[complexMesh.Tangents.Count];
+                    Parallel.For(0, complexMesh.Tangents.Count, (i) =>
+                    {
+                        var tangent = complexMesh.Tangents[i];
+                        var crossnt = complexMesh.Normals[i].Cross(tangent);
+                        ctangents[i] = new Vector4(tangent.x, tangent.y, tangent.z, (crossnt.Dot(complexMesh.BiTangents[i]) <= 0f) ? 1 : (-1));
+                    });
+                    var cuv = new List<Vector3>[complexMesh.TexCoords.Length];
+                    for (int i = 0; i < complexMesh.TexCoords.Length; i++)
+                    {
+                        cuv[i] = new List<Vector3>(complexMesh.TexCoords[i].Count);
+                        for (int x = 0; x < complexMesh.TexCoords[i].Count; x++)
+                        {
+                            cuv[i].Add(new Vector3(complexMesh.TexCoords[i][x].x, complexMesh.TexCoords[i][x].y, complexMesh.TexCoords[i][x].z));
+                        }
+                    }
+                    var colorAmount = 0;
+                    if(complexMesh.Colors.Length > 0)
+                    {
+                        colorAmount = complexMesh.Colors[0].Count;
+                    }
+                    var ccolors = new Color[colorAmount];
+                    if(complexMesh.Colors.Length > 0)
+                    {
+                        Parallel.For(0, complexMesh.Colors[0].Count, (i) =>
+                        {
+                            ccolors[i] = new Color(complexMesh.Colors[0][i].r, complexMesh.Colors[0][i].g, complexMesh.Colors[0][i].b, complexMesh.Colors[0][i].a);
+                        });
+                    }
+                    mesh.name = "Complex Mesh:" + complexMesh.MeshName;
+                    mesh.SetVertices(cvertices);
+                    mesh.SetTangents(ctangents);
+                    mesh.SetNormals(cnormals);
+                    for (int i = 0; i < cuv.Length; i++)
+                    {
+                        mesh.SetUVs(i, cuv[i]);
+                    }
+                    mesh.SetColors(ccolors);
+                    if (complexMesh.HasBones)
+                    {
+                        //Todo: LoadBoneData
+                        throw new NotImplementedException();
+                    }
+                    if (complexMesh.HasMeshAttachments)
+                    {
+                        //Todo: AddShapeKeys
+                        throw new NotImplementedException();
+                    }
+                    return;
+                }
+
+                if (!rmesh.IsTriangleMesh)
+                {
+                    RLog.Err("Unity can only render Triangle Meshes When basic");
                     return;
                 }
                 var vertices = new Vector3[rmesh.VertexCount];
