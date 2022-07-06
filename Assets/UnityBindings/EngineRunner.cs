@@ -13,6 +13,7 @@ using Debug = UnityEngine.Debug;
 using UnityEngine.XR.Management;
 using System.Text;
 using UnityEngine.Events;
+using B83.Win32;
 
 public class EngineRunner : MonoBehaviour
 {
@@ -192,6 +193,14 @@ public class EngineRunner : MonoBehaviour
         link.ChangeVRState(isInVR);
     }
 
+    public void OnDragAnDrop(List<string> files, POINT aDropPoint)
+    {
+#if UNITY_EDITOR
+        RLog.Info($"Files Droped {files.Count}");
+#endif
+        engine?.DragAndDropAction(files);
+    }
+
     IEnumerator Start()
     {
         if (!IsMainThread)
@@ -230,6 +239,15 @@ public class EngineRunner : MonoBehaviour
         cap = new OutputCapture();
         link = new UnityEngineLink(this);
         link.LiveVRChange = platform.ToString().Contains("Windows");
+        try
+        {
+            UnityDragAndDropHook.InstallHook();
+            UnityDragAndDropHook.OnDroppedFiles += OnDragAnDrop;
+        }
+        catch
+        {
+            RLog.Err("Failed to add Drag And Drop Hook");
+        }
         var args = new List<string>(Environment.GetCommandLineArgs());
         if (!StartInVR)
         {

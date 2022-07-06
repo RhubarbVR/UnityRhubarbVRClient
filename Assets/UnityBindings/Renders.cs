@@ -10,6 +10,7 @@ using RhuEngine.Components;
 using RhuEngine.WorldObjects.ECS;
 using System.Linq;
 using RhuEngine.WorldObjects;
+using static UnityMeshRender;
 
 public class UnityLight : RenderLinkBase<RhuEngine.Components.Light>
 {
@@ -121,7 +122,7 @@ public class UnityLight : RenderLinkBase<RhuEngine.Components.Light>
     {
         EngineRunner._.RunonMainThread(() =>
         {
-            light.areaSize = new Vector2(RenderingComponent.Size.Value, RenderingComponent.Size.Value);
+            light.cookieSize = RenderingComponent.Size.Value;
         });
     }
 
@@ -200,6 +201,20 @@ public class UnityLight : RenderLinkBase<RhuEngine.Components.Light>
     }
 }
 
+public static class EntityHelpers
+{
+    public static void SetPosFromEntity(Transform transform, Entity entity)
+    {
+        var m = entity.GlobalTrans;
+        var pos = m.Translation;
+        var rot = m.Rotation;
+        var scale = m.Scale;
+        transform.localPosition = new Vector3(float.IsNaN(pos.x) ? 0 : pos.x, float.IsNaN(pos.y) ? 0 : pos.y, float.IsNaN(pos.z) ? 0 : pos.z);
+        transform.localRotation = new Quaternion(float.IsNaN(rot.x) ? 0 : rot.x, float.IsNaN(rot.y) ? 0 : rot.y, float.IsNaN(rot.z) ? 0 : rot.z, float.IsNaN(rot.w) ? 0 : rot.w);
+        transform.localScale = new Vector3(float.IsNaN(scale.x) ? 0 : scale.x, float.IsNaN(scale.y) ? 0 : scale.y, float.IsNaN(scale.z) ? 0 : scale.z);
+    }
+}
+
 
 public class UIRender : RenderLinkBase<UICanvas>
 {
@@ -249,12 +264,318 @@ public class TextRender : RenderLinkBase<WorldText>
     }
 }
 
+public class ArmatureRenderLink : RenderLinkBase<Armature>
+{
+    public GameObject root;
 
-public class UnityMeshRender : RenderLinkBase<MeshRender>
+    GameObject[] children = new GameObject[0];
+
+    public override void Init()
+    {
+        EngineRunner._.RunonMainThread(() =>
+        {
+            root = new GameObject("Armature");
+            root.transform.parent = EngineRunner._.Root.transform;
+            RenderingComponent.ArmatureEntitys.Changed += ArmatureEntitys_Changed;
+            ArmatureEntitys_Changed(null);
+        });
+    }
+
+
+    public override void Render()
+    {
+        if (root is null)
+        {
+            return;
+        }
+        root.transform.localPosition = Vector3.zero;
+        root.transform.localRotation = Quaternion.identity;
+        root.transform.localScale = Vector3.one;
+        var minval = Math.Min(RenderingComponent.ArmatureEntitys.Count, children.Length);
+        for (int i = 0; i < minval; i++)
+        {
+            EntityHelpers.SetPosFromEntity(children[i].transform, RenderingComponent.ArmatureEntitys[i].Target ?? RenderingComponent.Entity);
+        }
+        EntityHelpers.SetPosFromEntity(root.transform, RenderingComponent.Entity);
+    }
+
+    private void ArmatureEntitys_Changed(IChangeable obj)
+    {
+        RWorld.ExecuteOnStartOfFrame(this, () =>
+        {
+            EngineRunner._.RunonMainThread(() =>
+            {
+                for (int i = 0; i < children.Length; i++)
+                {
+                    GameObject.Destroy(children[i]);
+                }
+                children = new GameObject[RenderingComponent.ArmatureEntitys.Count];
+                for (int i = 0; i < RenderingComponent.ArmatureEntitys.Count; i++)
+                {
+                    children[i] = new GameObject(RenderingComponent.ArmatureEntitys[i].Target?.name.Value ?? "Null");
+                    children[i].transform.parent = root.transform;
+                }
+            });
+        });
+    }
+
+    public override void Remove()
+    {
+        EngineRunner._.RunonMainThread(() =>
+        {
+            for (int i = 0; i < children.Length; i++)
+            {
+                GameObject.Destroy(children[i]);
+            }
+            GameObject.Destroy(root);
+        });
+    }
+
+
+    public override void Started()
+    {
+    }
+
+    public override void Stopped()
+    {
+    }
+}
+
+public interface IUnityMeshRender
+{
+    public MeshRender MeshRender { get; }
+    public void ReloadMitsToMaterial();
+}
+
+public class UnitySkinnedMeshRender : RenderLinkBase<SkinnedMeshRender>, IUnityMeshRender
+{
+    public GameObject gameObject;
+    public SkinnedMeshRenderer meshRenderer;
+
+    public override void Init()
+    {
+        EngineRunner._.RunonMainThread(() =>
+        {
+            gameObject = new GameObject("SkinnedMeshRender");
+            gameObject.transform.parent = EngineRunner._.Root.transform;
+            meshRenderer = gameObject.AddComponent<SkinnedMeshRenderer>();
+            RenderingComponent.materials.Changed += Materials_Changed;
+            RenderingComponent.colorLinear.Changed += Materials_Changed;
+            RenderingComponent.OrderOffset.Changed += Materials_Changed;
+            RenderingComponent.mesh.LoadChange += Mesh_LoadChange;
+            RenderingComponent.renderLayer.Changed += RenderLayer_Changed;
+            meshRenderer.renderingLayerMask = (uint)RenderingComponent.renderLayer.Value;
+            RenderingComponent.CastShadows.Changed += CastShadows_Changed;
+            meshRenderer.shadowCastingMode = RenderingComponent.CastShadows.Value switch
+            {
+                ShadowCast.On => UnityEngine.Rendering.ShadowCastingMode.On,
+                ShadowCast.TwoSided => UnityEngine.Rendering.ShadowCastingMode.TwoSided,
+                ShadowCast.ShadowsOnly => UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly,
+                _ => UnityEngine.Rendering.ShadowCastingMode.Off,
+            };
+            RenderingComponent.RecevieShadows.Changed += RecevieShadows_Changed;
+            meshRenderer.receiveShadows = RenderingComponent.RecevieShadows;
+            RenderingComponent.ReflectionProbs.Changed += ReflectionProbs_Changed;
+            meshRenderer.reflectionProbeUsage = (RenderingComponent.ReflectionProbs.Value) ? UnityEngine.Rendering.ReflectionProbeUsage.Off : UnityEngine.Rendering.ReflectionProbeUsage.BlendProbes;
+            RenderingComponent.LightProbs.Changed += LightProbs_Changed;
+            meshRenderer.lightProbeUsage = (RenderingComponent.LightProbs.Value) ? UnityEngine.Rendering.LightProbeUsage.Off : UnityEngine.Rendering.LightProbeUsage.BlendProbes;
+            Materials_Changed(null);
+            RenderingComponent.Armature.Changed += Armature_Changed;
+            Armature_Changed(null);
+            RenderingComponent.Bounds.Changed += Bounds_Changed;
+            Bounds_Changed(null);
+        });
+    }
+
+    private void Bounds_Changed(IChangeable obj)
+    {
+        EngineRunner._.RunonMainThread(() =>
+        {
+            var center = RenderingComponent.Bounds.Value.Center;
+            var exstends = RenderingComponent.Bounds.Value.Extents;
+            meshRenderer.localBounds = new Bounds(new Vector3(center.x, center.y, center.z), new Vector3(exstends.x, exstends.y, exstends.z));
+        });
+    }
+
+    private void Armature_Changed(IChangeable obj)
+    {
+        EngineRunner._.RunonMainThread(() =>
+        {
+            if (RenderingComponent.Armature.Target is null)
+            {
+                meshRenderer.rootBone = null;
+                return;
+            }
+            meshRenderer.rootBone = ((ArmatureRenderLink)RenderingComponent.Armature.Target.RenderLink).root.transform;
+        });
+    }
+
+    private void LightProbs_Changed(IChangeable obj)
+    {
+        EngineRunner._.RunonMainThread(() =>
+        {
+            meshRenderer.lightProbeUsage = (RenderingComponent.LightProbs.Value) ? UnityEngine.Rendering.LightProbeUsage.Off : UnityEngine.Rendering.LightProbeUsage.BlendProbes;
+        });
+    }
+
+    private void ReflectionProbs_Changed(IChangeable obj)
+    {
+        EngineRunner._.RunonMainThread(() =>
+        {
+            meshRenderer.reflectionProbeUsage = (RenderingComponent.ReflectionProbs.Value) ? UnityEngine.Rendering.ReflectionProbeUsage.Off : UnityEngine.Rendering.ReflectionProbeUsage.BlendProbes;
+        });
+    }
+
+    private void RecevieShadows_Changed(IChangeable obj)
+    {
+        EngineRunner._.RunonMainThread(() =>
+        {
+            meshRenderer.receiveShadows = RenderingComponent.RecevieShadows;
+        });
+    }
+
+    private void CastShadows_Changed(IChangeable obj)
+    {
+        EngineRunner._.RunonMainThread(() =>
+        {
+            meshRenderer.shadowCastingMode = RenderingComponent.CastShadows.Value switch
+            {
+                ShadowCast.On => UnityEngine.Rendering.ShadowCastingMode.On,
+                ShadowCast.TwoSided => UnityEngine.Rendering.ShadowCastingMode.TwoSided,
+                ShadowCast.ShadowsOnly => UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly,
+                _ => UnityEngine.Rendering.ShadowCastingMode.Off,
+            };
+        });
+    }
+
+    private void RenderLayer_Changed(IChangeable obj)
+    {
+        EngineRunner._.RunonMainThread(() =>
+        {
+            meshRenderer.renderingLayerMask = (uint)RenderingComponent.renderLayer.Value;
+        });
+    }
+
+    private void Mesh_LoadChange(RMesh obj)
+    {
+        if (obj is null)
+        {
+            meshRenderer.sharedMesh = null;
+        }
+        else
+        {
+            meshRenderer.sharedMesh = (Mesh)obj.mesh;
+        }
+    }
+
+    private void Entity_GlobalTransformChange(Entity obj, bool data)
+    {
+        EngineRunner._.RunonMainThread(() =>
+        {
+            if (gameObject is null)
+            {
+                return;
+            }
+            EntityHelpers.SetPosFromEntity(gameObject.transform, RenderingComponent.Entity);
+        });
+    }
+
+    public MatManager[] BoundMits = new MatManager[0];
+
+    public void ReloadMitsToMaterial()
+    {
+        RWorld.ExecuteOnEndOfFrame(this, () =>
+        {
+            var unitymits = new Material[BoundMits.Length];
+            for (int i = 0; i < BoundMits.Length; i++)
+            {
+                if (BoundMits[i].LastHolder is null)
+                {
+                    unitymits[i] = null;
+                }
+                else
+                {
+                    unitymits[i] = BoundMits[i].LastHolder.material;
+                }
+            }
+            meshRenderer.materials = unitymits;
+        });
+    }
+
+    private void Materials_Changed(IChangeable obj)
+    {
+        EngineRunner._.RunonMainThread(() =>
+        {
+            for (int i = 0; i < BoundMits.Length; i++)
+            {
+                BoundMits[i]?.Dispose();
+            }
+            BoundMits = new MatManager[RenderingComponent.materials.Count];
+            for (int i = 0; i < RenderingComponent.materials.Count; i++)
+            {
+                BoundMits[i] = new MatManager(RenderingComponent.materials[i], this);
+            }
+        });
+    }
+
+
+    public override void Remove()
+    {
+        EngineRunner._.RunonMainThread(() =>
+        {
+            UnityEngine.Object.Destroy(gameObject);
+        });
+    }
+
+    public override void Started()
+    {
+        EngineRunner._.RunonMainThread(() =>
+        {
+            gameObject?.SetActive(true);
+        });
+    }
+
+    public override void Stopped()
+    {
+        EngineRunner._.RunonMainThread(() =>
+        {
+            gameObject?.SetActive(false);
+        });
+    }
+
+    public MeshRender MeshRender => RenderingComponent;
+
+    public override void Render()
+    {
+        if (gameObject is null)
+        {
+            return;
+        }
+        Entity_GlobalTransformChange(null, false);
+        EngineRunner._.RunonMainThread(() =>
+        {
+            var amountOnMesh = (meshRenderer.sharedMesh?.blendShapeCount ?? 0);
+            var loopAmount = Math.Min(amountOnMesh, RenderingComponent.BlendShapes.Count);
+            for (int i = 0; i < loopAmount; i++)
+            {
+                meshRenderer.SetBlendShapeWeight(i, RenderingComponent.BlendShapes[i].Weight.Value);
+            }
+            for (int i = 0; i < amountOnMesh - loopAmount; i++)
+            {
+                meshRenderer.SetBlendShapeWeight(loopAmount + i, 0);
+            }
+        });
+    }
+}
+
+
+public class UnityMeshRender : RenderLinkBase<MeshRender>, IUnityMeshRender
 {
     public GameObject gameObject;
     public MeshRenderer meshRenderer;
     public MeshFilter meshFilter;
+
+    public MeshRender MeshRender => RenderingComponent;
 
     public override void Init()
     {
@@ -352,13 +673,7 @@ public class UnityMeshRender : RenderLinkBase<MeshRender>
         {
             return;
         }
-        var m = RenderingComponent.Entity.GlobalTrans;
-        var pos = m.Translation;
-        var rot = m.Rotation;
-        var scale = m.Scale;
-        gameObject.transform.localPosition = new Vector3(float.IsNaN(pos.x) ? 0 : pos.x, float.IsNaN(pos.y) ? 0 : pos.y, float.IsNaN(pos.z) ? 0 : pos.z);
-        gameObject.transform.localRotation = new Quaternion(float.IsNaN(rot.x) ? 0 : rot.x, float.IsNaN(rot.y) ? 0 : rot.y, float.IsNaN(rot.z) ? 0 : rot.z, float.IsNaN(rot.w) ? 0 : rot.w);
-        gameObject.transform.localScale = new Vector3(float.IsNaN(scale.x) ? 0 : scale.x, float.IsNaN(scale.y) ? 0 : scale.y, float.IsNaN(scale.z) ? 0 : scale.z);
+        EntityHelpers.SetPosFromEntity(gameObject.transform, RenderingComponent.Entity);
     }
 
     public MatManager[] BoundMits = new MatManager[0];
@@ -366,9 +681,9 @@ public class UnityMeshRender : RenderLinkBase<MeshRender>
     public class MatManager : IDisposable
     {
         public AssetRef<RMaterial> TargetAssetRef;
-        private readonly UnityMeshRender unityMeshRender;
+        private readonly IUnityMeshRender unityMeshRender;
 
-        public MatManager(AssetRef<RMaterial> assetRef, UnityMeshRender unityMeshRender)
+        public MatManager(AssetRef<RMaterial> assetRef, IUnityMeshRender unityMeshRender)
         {
             TargetAssetRef = assetRef;
             this.unityMeshRender = unityMeshRender;
@@ -420,7 +735,7 @@ public class UnityMeshRender : RenderLinkBase<MeshRender>
             }
             if (TargetAssetRef.Asset.Target is UnityMaterialHolder holder)
             {
-                var endHolder = MitManager.GetMitWithOffset(TargetAssetRef.Asset, unityMeshRender.RenderingComponent.OrderOffset.Value, unityMeshRender.RenderingComponent.colorLinear.Value);
+                var endHolder = MitManager.GetMitWithOffset(TargetAssetRef.Asset, unityMeshRender.MeshRender.OrderOffset.Value, unityMeshRender.MeshRender.colorLinear.Value);
                 if (endHolder is not null)
                 {
                     LastHolder = endHolder;
@@ -458,7 +773,7 @@ public class UnityMeshRender : RenderLinkBase<MeshRender>
         }
     }
 
-    private void ReloadMitsToMaterial()
+    public void ReloadMitsToMaterial()
     {
         RWorld.ExecuteOnEndOfFrame(this, () =>
         {
@@ -518,8 +833,6 @@ public class UnityMeshRender : RenderLinkBase<MeshRender>
             gameObject?.SetActive(false);
         });
     }
-
-    public bool firstRender = true;
 
     public override void Render()
     {
