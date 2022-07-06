@@ -458,14 +458,20 @@ public class UnitySkinnedMeshRender : RenderLinkBase<SkinnedMeshRender>, IUnityM
 
     private void Mesh_LoadChange(RMesh obj)
     {
-        if (obj is null)
+        EngineRunner._.RunonMainThread(() =>
         {
-            meshRenderer.sharedMesh = null;
-        }
-        else
-        {
-            meshRenderer.sharedMesh = (Mesh)obj.mesh;
-        }
+            if (obj is null)
+            {
+                meshRenderer.sharedMesh = null;
+            }
+            else
+            {
+                ((UnityMeshHolder)obj.mesh).LoadIn((mesh) =>
+                {
+                    meshRenderer.sharedMesh = (Mesh)mesh;
+                });
+            }
+        });
     }
 
     private void Entity_GlobalTransformChange(Entity obj, bool data)
@@ -552,19 +558,16 @@ public class UnitySkinnedMeshRender : RenderLinkBase<SkinnedMeshRender>, IUnityM
             return;
         }
         Entity_GlobalTransformChange(null, false);
-        EngineRunner._.RunonMainThread(() =>
+        var amountOnMesh = (meshRenderer.sharedMesh?.blendShapeCount ?? 0);
+        var loopAmount = Math.Min(amountOnMesh, RenderingComponent.BlendShapes.Count);
+        for (int i = 0; i < loopAmount; i++)
         {
-            var amountOnMesh = (meshRenderer.sharedMesh?.blendShapeCount ?? 0);
-            var loopAmount = Math.Min(amountOnMesh, RenderingComponent.BlendShapes.Count);
-            for (int i = 0; i < loopAmount; i++)
-            {
-                meshRenderer.SetBlendShapeWeight(i, RenderingComponent.BlendShapes[i].Weight.Value);
-            }
-            for (int i = 0; i < amountOnMesh - loopAmount; i++)
-            {
-                meshRenderer.SetBlendShapeWeight(loopAmount + i, 0);
-            }
-        });
+            meshRenderer.SetBlendShapeWeight(i, RenderingComponent.BlendShapes[i].Weight.Value);
+        }
+        for (int i = 0; i < amountOnMesh - loopAmount; i++)
+        {
+            meshRenderer.SetBlendShapeWeight(loopAmount + i, 0);
+        }
     }
 }
 
@@ -657,14 +660,19 @@ public class UnityMeshRender : RenderLinkBase<MeshRender>, IUnityMeshRender
 
     private void Mesh_LoadChange(RMesh obj)
     {
-        if (obj is null)
+        EngineRunner._.RunonMainThread(() =>
         {
-            meshFilter.mesh = null;
-        }
-        else
-        {
-            meshFilter.mesh = (Mesh)obj.mesh;
-        }
+            if (obj is null)
+            {
+                meshFilter.mesh = null;
+            }
+            else
+            {
+                ((UnityMeshHolder)obj.mesh).LoadIn((mesh) => {
+                    meshFilter.mesh = mesh;
+                });
+            }
+        });
     }
 
     private void Entity_GlobalTransformChange(Entity obj, bool data)
