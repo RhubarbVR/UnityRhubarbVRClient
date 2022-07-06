@@ -10,19 +10,47 @@ public class UnityMaterialHolder
 {
     public Material material;
     public EngineRunner EngineRunner;
+    public event Action<Material> OnMaterialLoadedIn;
+    public UnityMaterialHolder(EngineRunner engineRunner)
+    {
+        EngineRunner = engineRunner;
+    }
+
+    public void ForceMaterialLoadedIn()
+    {
+        OnMaterialLoadedIn?.Invoke(material);
+    }
+
     public UnityMaterialHolder(EngineRunner engineRunner, Material MakeMit)
     {
         EngineRunner = engineRunner;
         material = MakeMit;
+        OnMaterialLoadedIn?.Invoke(material);
     }
     public UnityMaterialHolder(EngineRunner engineRunner,Func<Material> MakeMit)
     {
         EngineRunner = engineRunner;
-        engineRunner.RunonMainThread(() => material = MakeMit());
+        engineRunner.RunonMainThread(() => 
+        { 
+            material = MakeMit();
+            OnMaterialLoadedIn?.Invoke(material);
+        });
     }
     public void Action(Action<Material> action)
     {
         EngineRunner.RunonMainThread(() => action(material));
+    }
+
+    public void LoadIn(Action<Material> value)
+    {
+        if (material is null)
+        {
+            OnMaterialLoadedIn += value;
+        }
+        else
+        {
+            value(material);
+        }
     }
 }
 

@@ -256,8 +256,6 @@ public class UnityMeshRender : RenderLinkBase<MeshRender>
     public MeshRenderer meshRenderer;
     public MeshFilter meshFilter;
 
-    public Material[] materials = new Material[0];
-
     public override void Init()
     {
         EngineRunner._.RunonMainThread(() =>
@@ -267,8 +265,8 @@ public class UnityMeshRender : RenderLinkBase<MeshRender>
             meshRenderer = gameObject.AddComponent<MeshRenderer>();
             meshFilter = gameObject.AddComponent<MeshFilter>();
             RenderingComponent.materials.Changed += Materials_Changed;
-            RenderingComponent.colorLinear.Changed += ColorLinear_Changed;
-            RenderingComponent.OrderOffset.Changed += ColorLinear_Changed;
+            RenderingComponent.colorLinear.Changed += Materials_Changed;
+            RenderingComponent.OrderOffset.Changed += Materials_Changed;
             RenderingComponent.mesh.LoadChange += Mesh_LoadChange;
             RenderingComponent.renderLayer.Changed += RenderLayer_Changed;
             meshRenderer.renderingLayerMask = (uint)RenderingComponent.renderLayer.Value;
@@ -286,6 +284,7 @@ public class UnityMeshRender : RenderLinkBase<MeshRender>
             meshRenderer.reflectionProbeUsage = (RenderingComponent.ReflectionProbs.Value) ? UnityEngine.Rendering.ReflectionProbeUsage.Off : UnityEngine.Rendering.ReflectionProbeUsage.BlendProbes;
             RenderingComponent.LightProbs.Changed += LightProbs_Changed;
             meshRenderer.lightProbeUsage = (RenderingComponent.LightProbs.Value) ? UnityEngine.Rendering.LightProbeUsage.Off : UnityEngine.Rendering.LightProbeUsage.BlendProbes;
+            Materials_Changed(null);
         });
     }
 
@@ -362,20 +361,120 @@ public class UnityMeshRender : RenderLinkBase<MeshRender>
         gameObject.transform.localScale = new Vector3(float.IsNaN(scale.x) ? 0 : scale.x, float.IsNaN(scale.y) ? 0 : scale.y, float.IsNaN(scale.z) ? 0 : scale.z);
     }
 
-    private void ColorLinear_Changed(IChangeable obj)
+    public MatManager[] BoundMits = new MatManager[0];
+
+    public class MatManager : IDisposable
     {
-        EngineRunner._.RunonMainThread(() =>
+        public AssetRef<RMaterial> TargetAssetRef;
+        private readonly UnityMeshRender unityMeshRender;
+
+        public MatManager(AssetRef<RMaterial> assetRef, UnityMeshRender unityMeshRender)
         {
-            for (int i = 0; i < materials.Length; i++)
+            TargetAssetRef = assetRef;
+            this.unityMeshRender = unityMeshRender;
+            assetRef.LoadChange += AssetRef_LoadChange;
+            AssetRef_LoadChange(null);
+        }
+        public RMaterial LastBound = null;
+        public UnityMaterialHolder LastHolder = null;
+
+        private void AssetRef_LoadChange(RMaterial obj)
+        {
+            if (LastBound is not null)
             {
-                var color = RenderingComponent.colorLinear.Value;
-                if (materials[i] is not null)
+                LastBound.PramChanged -= PramChanged;
+            }
+            if (LastHolder is not null)
+            {
+                try
                 {
-                    var mit = ((UnityMaterialHolder)RenderingComponent.materials[i].Asset?.Target).material;
-                    materials[i].renderQueue = Math.Clamp(mit.renderQueue + RenderingComponent.OrderOffset.Value, -1000, 5000);
-                    materials[i].color = new Color(color.r, color.g, color.b, color.a);
+                    LastHolder.OnMaterialLoadedIn -= LastHolder_OnMaterialLoadedIn;
+                }
+                catch { }
+                LastHolder = null;
+            }
+            EngineRunner._.RunonMainThread(() =>
+            {
+                if (TargetAssetRef.Asset is null)
+                {
+                    unityMeshRender.ReloadMitsToMaterial();
+                    return;
+                }
+                TargetAssetRef.Asset.PramChanged += PramChanged;
+                LoadMitIn();
+            });
+        }
+
+        private void LastHolder_OnMaterialLoadedIn(Material obj)
+        {
+            unityMeshRender.ReloadMitsToMaterial();
+        }
+
+        private void LoadMitIn()
+        {
+            if (TargetAssetRef.Asset.Target is null)
+            {
+                RLog.Err("Had no loaded target");
+                unityMeshRender.ReloadMitsToMaterial();
+                return;
+            }
+            if (TargetAssetRef.Asset.Target is UnityMaterialHolder holder)
+            {
+                var endHolder = MitManager.GetMitWithOffset(TargetAssetRef.Asset, unityMeshRender.RenderingComponent.OrderOffset.Value, unityMeshRender.RenderingComponent.colorLinear.Value);
+                if (endHolder is not null)
+                {
+                    LastHolder = endHolder;
+                    endHolder.LoadIn(LastHolder_OnMaterialLoadedIn);
+                }
+                else
+                {
+                    RLog.Err("Failed to GetMitWithOffset");
+                    unityMeshRender.ReloadMitsToMaterial();
+                    return;
                 }
             }
+            else
+            {
+                RLog.Err("Was not a UnityMaterialHolder");
+                unityMeshRender.ReloadMitsToMaterial();
+                return;
+            }
+        }
+
+        private void PramChanged(RMaterial obj)
+        {
+            EngineRunner._.RunonMainThread(() =>
+            {
+                LoadMitIn();
+            });
+        }
+
+        public void Dispose()
+        {
+            if (LastBound is not null)
+            {
+                LastBound.PramChanged -= PramChanged;
+            }
+        }
+    }
+
+    private void ReloadMitsToMaterial()
+    {
+        RWorld.ExecuteOnEndOfFrame(this, () =>
+        {
+            var unitymits = new Material[BoundMits.Length];
+            for (int i = 0; i < BoundMits.Length; i++)
+            {
+                if (BoundMits[i].LastHolder is null)
+                {
+                    unitymits[i] = null;
+                }
+                else
+                {
+                    unitymits[i] = BoundMits[i].LastHolder.material;
+                }
+            }
+            meshRenderer.materials = unitymits;
         });
     }
 
@@ -383,41 +482,24 @@ public class UnityMeshRender : RenderLinkBase<MeshRender>
     {
         EngineRunner._.RunonMainThread(() =>
         {
-            if (meshRenderer is null)
+            for (int i = 0; i < BoundMits.Length; i++)
             {
-                return;
+                BoundMits[i]?.Dispose();
             }
-            for (int i = 0; i < materials.Length; i++)
-            {
-                UnityEngine.Object.Destroy(materials[i]);
-            }
-
-            materials = new Material[RenderingComponent.materials.Count];
+            BoundMits = new MatManager[RenderingComponent.materials.Count];
             for (int i = 0; i < RenderingComponent.materials.Count; i++)
             {
-                var mit = (UnityMaterialHolder)RenderingComponent.materials[i].Asset?.Target;
-                if (mit is not null)
-                {
-                    materials[i] = MitManager.GetMitWithOffset(RenderingComponent.materials[i].Asset, RenderingComponent.OrderOffset.Value, RenderingComponent.colorLinear.Value).material;
-                }
-                else
-                {
-                    materials[i] = null;
-                }
+                BoundMits[i] = new MatManager(RenderingComponent.materials[i], this);
             }
-            meshRenderer.materials = materials;
         });
     }
+
 
     public override void Remove()
     {
         EngineRunner._.RunonMainThread(() =>
         {
             UnityEngine.Object.Destroy(gameObject);
-            for (int i = 0; i < materials.Length; i++)
-            {
-                UnityEngine.Object.Destroy(materials[i]);
-            }
         });
     }
 
@@ -441,12 +523,6 @@ public class UnityMeshRender : RenderLinkBase<MeshRender>
 
     public override void Render()
     {
-        if (firstRender)
-        {
-            Materials_Changed(null);
-            ColorLinear_Changed(null);
-            firstRender = false;
-        }
         Entity_GlobalTransformChange(null, false);
     }
 }

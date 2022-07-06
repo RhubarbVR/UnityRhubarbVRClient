@@ -15,7 +15,7 @@ public static class MitManager
 
     public static UnityMaterialHolder GetMitWithOffset(RMaterial loadingLogo, int depth, Colorf color)
     {
-        var mit = (UnityMaterialHolder)loadingLogo?.Target;
+        var mit = (UnityMaterialHolder)loadingLogo.Target;
         if (depth == 0 && color == Colorf.White)
         {
             return mit;
@@ -34,25 +34,31 @@ public static class MitManager
     {
         UnityMaterialHolder CreateNewMit()
         {
-            var miter = new UnityMaterialHolder(EngineRunner._, () =>
+            var miter = new UnityMaterialHolder(EngineRunner._);
+            var mit = (UnityMaterialHolder)loadingLogo.Target;
+            mit.LoadIn((unitymit) =>
             {
-                var mit = (UnityMaterialHolder)loadingLogo?.Target;
-                var e = new Material(mit.material);
-                e.renderQueue += depth;
+                var e = new Material(unitymit);
+                e.renderQueue = Math.Min(e.renderQueue + depth,5000);
                 e.color *= new Color(color.r, color.g, color.b, color.a);
-                return e;
+                miter.material = e;
+                miter.ForceMaterialLoadedIn();
             });
             mits.Add((loadingLogo, depth, color), miter);
             return miter;
         }
-
+        var currentMit = CreateNewMit();
         loadingLogo.PramChanged += (mit) =>
         {
             EngineRunner._.RunonMainThread(() =>
             {
                 UnityEngine.Object.Destroy(mits[(loadingLogo, depth, color)].material);
-                mits.Remove((loadingLogo, depth, color));
-                CreateNewMit();
+                var mit = (UnityMaterialHolder)loadingLogo.Target;
+                var e = new Material(mit.material);
+                e.renderQueue = Math.Min(e.renderQueue + depth, 5000);
+                e.color *= new Color(color.r, color.g, color.b, color.a);
+                currentMit.material = e;
+                currentMit.ForceMaterialLoadedIn();
             });
         };
         loadingLogo.OnDispose += (mit) =>
@@ -63,7 +69,7 @@ public static class MitManager
                 mits.Remove((loadingLogo, depth, color));
             });
         };
-        return CreateNewMit();
+        return currentMit;
     }
 }
 

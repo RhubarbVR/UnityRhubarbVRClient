@@ -200,7 +200,6 @@ internal class UnitStaticMits : IStaticMaterialManager
                 mit.SetTexture("_DetailMask", ((UnityTexture2DHolder)value.Tex).texture);
             });
         }
-        public bool Emission { get; set; }
         public RTexture2D EmissionTexture
         {
             set => YourData.Action((mit) =>
@@ -224,38 +223,69 @@ internal class UnitStaticMits : IStaticMaterialManager
             });
         }
         public Colorf EmissionTint { set => YourData.Action((mit) => mit.SetColor("_EmissionColor", new Color(value.r, value.g, value.b, value.a))); }
-        public Vector2f Tilling
+        public Vector2f AlbedoTextureTilling { set => YourData.Action((mit) => mit.SetTextureScale("_MainTex", new Vector2(value.x, value.y))); }
+        public Vector2f AlbedoTextureOffset { set => YourData.Action((mit) => mit.SetTextureOffset("_MainTex", new Vector2(value.x, value.y))); }
+        public Vector2f MetallicTextureTilling { set => YourData.Action((mit) => mit.SetTextureScale("_MetallicGlossMap", new Vector2(value.x, value.y))); }
+        public Vector2f MetallicTextureOffset { set => YourData.Action((mit) => mit.SetTextureOffset("_MetallicGlossMap", new Vector2(value.x, value.y))); }
+        public Vector2f NormalMapTilling { set => YourData.Action((mit) => mit.SetTextureScale("_BumpMap", new Vector2(value.x, value.y))); }
+        public Vector2f NormalMapOffset { set => YourData.Action((mit) => mit.SetTextureOffset("_BumpMap", new Vector2(value.x, value.y))); }
+        public Vector2f HeightMapTilling { set => YourData.Action((mit) => mit.SetTextureScale("_ParallaxMap", new Vector2(value.x, value.y))); }
+        public Vector2f HeightMapOffset { set => YourData.Action((mit) => mit.SetTextureOffset("_ParallaxMap", new Vector2(value.x, value.y))); }
+        public Vector2f OcclusionTilling { set => YourData.Action((mit) => mit.SetTextureScale("_OcclusionMap", new Vector2(value.x, value.y))); }
+        public Vector2f OcclusionOffset { set => YourData.Action((mit) => mit.SetTextureOffset("_OcclusionMap", new Vector2(value.x, value.y))); }
+        public Vector2f DetailMaskTilling { set => YourData.Action((mit) => mit.SetTextureScale("_DetailMask", new Vector2(value.x, value.y))); }
+        public Vector2f DetailMaskOffset { set => YourData.Action((mit) => mit.SetTextureOffset("_DetailMask", new Vector2(value.x, value.y))); }
+        public RTexture2D DetailAlbedo
         {
             set => YourData.Action((mit) =>
-        {
-            var newvalue = new Vector2(value.x, value.y);
-            mit.SetTextureScale("_MainTex", newvalue);
-            mit.SetTextureScale("_MetallicGlossMap", newvalue);
-            mit.SetTextureScale("_BumpMap", newvalue);
-            mit.SetTextureScale("_ParallaxMap", newvalue);
-            mit.SetTextureScale("_OcclusionMap", newvalue);
-            mit.SetTextureScale("_EmissionMap", newvalue);
-            mit.SetTextureScale("_DetailMask", newvalue);
-            mit.SetTextureScale("_DetailAlbedoMap", newvalue);
-            mit.SetTextureScale("_DetailNormalMap", newvalue);
-        });
+            {
+                if (value == null)
+                {
+                    mit.SetTexture("_DetailAlbedoMap", null);
+                    return;
+                }
+                if (value.Tex == null)
+                {
+                    mit.SetTexture("_DetailAlbedoMap", EngineRunner._.LoadingTexture);
+                    return;
+                }
+                if (((UnityTexture2DHolder)value.Tex).texture == null)
+                {
+                    mit.SetTexture("_DetailAlbedoMap", EngineRunner._.LoadingTexture);
+                    return;
+                }
+                mit.SetTexture("_DetailAlbedoMap", ((UnityTexture2DHolder)value.Tex).texture);
+            });
         }
-        public Vector2f Offset
+        public Vector2f DetailAlbedoTilling { set => YourData.Action((mit) => mit.SetTextureScale("_DetailAlbedoMap", new Vector2(value.x, value.y))); }
+        public Vector2f DetailAlbedoOffset { set => YourData.Action((mit) => mit.SetTextureOffset("_DetailAlbedoMap", new Vector2(value.x, value.y))); }
+        public RTexture2D DetailNormal
         {
             set => YourData.Action((mit) =>
-        {
-            var newvalue = new Vector2(value.x, value.y);
-            mit.SetTextureOffset("_MainTex", newvalue);
-            mit.SetTextureOffset("_MetallicGlossMap", newvalue);
-            mit.SetTextureOffset("_BumpMap", newvalue);
-            mit.SetTextureOffset("_ParallaxMap", newvalue);
-            mit.SetTextureOffset("_OcclusionMap", newvalue);
-            mit.SetTextureOffset("_EmissionMap", newvalue);
-            mit.SetTextureOffset("_DetailMask", newvalue);
-            mit.SetTextureOffset("_DetailAlbedoMap", newvalue);
-            mit.SetTextureOffset("_DetailNormalMap", newvalue);
-        });
+            {
+                if (value == null)
+                {
+                    mit.SetTexture("_DetailNormalMap", null);
+                    return;
+                }
+                if (value.Tex == null)
+                {
+                    mit.SetTexture("_DetailNormalMap", EngineRunner._.LoadingTexture);
+                    return;
+                }
+                if (((UnityTexture2DHolder)value.Tex).texture == null)
+                {
+                    mit.SetTexture("_DetailNormalMap", EngineRunner._.LoadingTexture);
+                    return;
+                }
+                mit.SetTexture("_DetailNormalMap", ((UnityTexture2DHolder)value.Tex).texture);
+            });
         }
+        public Vector2f DetailNormalTilling { set => YourData.Action((mit) => mit.SetTextureScale("_DetailNormalMap", new Vector2(value.x, value.y))); }
+        public Vector2f DetailNormalOffset { set => YourData.Action((mit) => mit.SetTextureOffset("_DetailNormalMap", new Vector2(value.x, value.y))); }
+        public float DetailNormalMapScale { set => YourData.Action((mit) => mit.SetFloat("_DetailNormalMapScale", value)); }
+        public Vector2f EmissionTextureTilling { set => YourData.Action((mit) => mit.SetTextureScale("_EmissionMap", new Vector2(value.x, value.y))); }
+        public Vector2f EmissionTextureOffset { set => YourData.Action((mit) => mit.SetTextureOffset("_EmissionMap", new Vector2(value.x, value.y))); }
     }
 
     public class UnlitMaterial : StaticMaterialBase<UnityMaterialHolder>, IUnlitMaterial

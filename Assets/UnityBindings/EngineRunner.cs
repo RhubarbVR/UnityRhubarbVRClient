@@ -81,7 +81,6 @@ public class EngineRunner : MonoBehaviour
     public Shader UnlitTransparentBlend;
     public Shader TextShader;
 
-
     public InputDevice left;
 
     public InputDevice right;
