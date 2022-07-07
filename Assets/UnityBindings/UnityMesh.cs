@@ -122,6 +122,53 @@ public class UnityMeshHolder
     }
 }
 
+public static class BoneWeightAddons
+{
+    public static void AddBone(this ref BoneWeight bone, int boneIndex, float boneWeight)
+    {
+        var targetLayer = -1;
+        var smallestValue = float.MaxValue;
+        for (int i = 0; i < 4; i++)
+        {
+            var currentLayerWeight = i switch
+            {
+                0 => bone.weight0,
+                1 => bone.weight1,
+                2 => bone.weight2,
+                _ => bone.weight3,
+            };
+            if (currentLayerWeight < smallestValue)
+            {
+                smallestValue = currentLayerWeight;
+                targetLayer = i;
+            }
+        }
+        if (boneWeight > smallestValue)
+        {
+            switch (targetLayer)
+            {
+                case 0:
+                    bone.weight0 = boneWeight;
+                    bone.boneIndex0 = boneIndex;
+                    break;
+                case 1:
+                    bone.weight1 = boneWeight;
+                    bone.boneIndex1 = boneIndex;
+                    break;
+                case 2:
+                    bone.weight2 = boneWeight;
+                    bone.boneIndex2 = boneIndex;
+                    break;
+                case 3:
+                    bone.weight3 = boneWeight;
+                    bone.boneIndex3 = boneIndex;
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+}
 
 public class UnityMesh : IRMesh
 {
@@ -183,7 +230,6 @@ public class UnityMesh : IRMesh
             return MeshCount++;
         }
     }
-
 
 
     public void MeshLoadAction(Mesh unityMesh, IMesh rmesh)
@@ -253,80 +299,35 @@ public class UnityMesh : IRMesh
                 if (complexMesh.HasBones)
                 {
                     var BoneVertexWights = new BoneWeight[complexMesh.VertexCount];
-                    float GetCurrentBoneWeight(int currentVertex, int index)
-                    {
-                        return index switch
-                        {
-                            0 => BoneVertexWights[currentVertex].weight0,
-                            1 => BoneVertexWights[currentVertex].weight1,
-                            2 => BoneVertexWights[currentVertex].weight2,
-                            3 => BoneVertexWights[currentVertex].weight3,
-                            _ => throw new NotSupportedException(),
-                        };
-                    }
                     var bonePoses = new Matrix4x4[complexMesh.BonesCount];
-                    Parallel.ForEach(complexMesh.Bones, (Bone, _, BoneIndex) =>
+                    var BoneIndex = 0;
+                    foreach (var Bone in complexMesh.Bones)
                     {
+                        //bonePoses[BoneIndex] = Matrix4x4.identity;
                         bonePoses[BoneIndex] = new Matrix4x4
                         {
                             m00 = Bone.OffsetMatrix.m.M11,
                             m01 = Bone.OffsetMatrix.m.M12,
                             m02 = Bone.OffsetMatrix.m.M13,
-                            m03 = Bone.OffsetMatrix.m.M14,
-                            m10 = Bone.OffsetMatrix.m.M21,
-                            m11 = Bone.OffsetMatrix.m.M22,
-                            m12 = Bone.OffsetMatrix.m.M23,
-                            m13 = Bone.OffsetMatrix.m.M24,
-                            m20 = Bone.OffsetMatrix.m.M31,
-                            m21 = Bone.OffsetMatrix.m.M32,
-                            m22 = Bone.OffsetMatrix.m.M33,
-                            m23 = Bone.OffsetMatrix.m.M34,
-                            m30 = Bone.OffsetMatrix.m.M41,
+                            m03 = Bone.OffsetMatrix.m.M21,
+                            m10 = Bone.OffsetMatrix.m.M22,
+                            m11 = Bone.OffsetMatrix.m.M23,
+                            m12 = Bone.OffsetMatrix.m.M24,
+                            m13 = Bone.OffsetMatrix.m.M31,
+                            m20 = Bone.OffsetMatrix.m.M32,
+                            m21 = Bone.OffsetMatrix.m.M33,
+                            m22 = Bone.OffsetMatrix.m.M34,
+                            m23 = Bone.OffsetMatrix.m.M41,
                             m31 = Bone.OffsetMatrix.m.M42,
                             m32 = Bone.OffsetMatrix.m.M43,
                             m33 = Bone.OffsetMatrix.m.M44,
                         };
-                        var vertweights = Bone.VertexWeights.ToArray();
-                        for (int i = 0; i < vertweights.Length; i++)
+                        foreach (var vertexWe in Bone.VertexWeights)
                         {
-                            var currentBone = (int)BoneIndex;
-                            var weight = vertweights[i].Weight;
-                            var vertexId = vertweights[i].VertexID;
-                            int largest = -1;
-                            float weighMaxCheck = float.MaxValue;
-                            for (int currentWeght = 0; currentWeght < 4; currentWeght++)
-                            {
-                                float weight2 = GetCurrentBoneWeight(vertexId, currentWeght);
-                                if (weight2 < weighMaxCheck)
-                                {
-                                    weighMaxCheck = weight2;
-                                    largest = currentWeght;
-                                }
-                            }
-                            if (weight > weighMaxCheck)
-                            {
-                                switch (largest)
-                                {
-                                    case 0:
-                                        BoneVertexWights[vertexId].boneIndex0 = currentBone;
-                                        BoneVertexWights[vertexId].weight0 = weight;
-                                        break;
-                                    case 1:
-                                        BoneVertexWights[vertexId].boneIndex1 = currentBone;
-                                        BoneVertexWights[vertexId].weight1 = weight;
-                                        break;
-                                    case 2:
-                                        BoneVertexWights[vertexId].boneIndex2 = currentBone;
-                                        BoneVertexWights[vertexId].weight2 = weight;
-                                        break;
-                                    case 3:
-                                        BoneVertexWights[vertexId].boneIndex3 = currentBone;
-                                        BoneVertexWights[vertexId].weight3 = weight;
-                                        break;
-                                }
-                            }
+                            BoneVertexWights[vertexWe.VertexID].AddBone(BoneIndex, vertexWe.Weight);
                         }
-                    });
+                        BoneIndex++;
+                    }
                     mesh.boneWeights = BoneVertexWights;
                     mesh.bindposes = bonePoses;
                 }
@@ -413,7 +414,6 @@ public class UnityMesh : IRMesh
             mesh.SetUVs(0, uv);
 
             mesh.SetColors(colors);
-
             mesh.SetTriangles(rmesh.RenderIndices().ToArray(), 0);
 
             mesh.RecalculateBounds();
@@ -431,9 +431,9 @@ public class UnityMesh : IRMesh
             switch (rmesh.PrimitiveType)
             {
                 case RPrimitiveType.Point:
-                    foreach (var point in item.Indices)
+                    if (item.Indices.Count > 0)
                     {
-                        yield return point;
+                        yield return item.Indices[0];
                     }
                     break;
                 case RPrimitiveType.Line:
@@ -449,7 +449,12 @@ public class UnityMesh : IRMesh
                     }
                     break;
                 case RPrimitiveType.Triangle:
-                    if(item.Indices.Count == 4)
+                    if (item.Indices.Count == 3)
+                    {
+                        yield return item.Indices[0];
+                        yield return item.Indices[1];
+                        yield return item.Indices[2];
+                    } else if (item.Indices.Count >= 4)
                     {
                         yield return item.Indices[0];
                         yield return item.Indices[1];
@@ -457,12 +462,6 @@ public class UnityMesh : IRMesh
                         yield return item.Indices[0];
                         yield return item.Indices[2];
                         yield return item.Indices[3];
-                    }
-                    else if (item.Indices.Count == 3)
-                    {
-                        yield return item.Indices[0];
-                        yield return item.Indices[1];
-                        yield return item.Indices[2];
                     }
                     break;
                 case RPrimitiveType.Polygon:

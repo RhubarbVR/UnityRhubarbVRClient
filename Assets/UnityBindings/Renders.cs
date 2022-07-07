@@ -203,9 +203,17 @@ public class UnityLight : RenderLinkBase<RhuEngine.Components.Light>
 
 public static class EntityHelpers
 {
-    public static void SetPosFromEntity(Transform transform, Entity entity)
+    public static void SetPosFromEntity(Transform transform, Entity entity, Entity reletive = null)
     {
-        var m = entity.GlobalTrans;
+        Matrix m;
+        if(reletive is not null)
+        {
+            m = reletive.GlobalToLocal(entity.GlobalTrans);
+        }
+        else
+        {
+            m = entity.GlobalTrans;
+        };
         var pos = m.Translation;
         var rot = m.Rotation;
         var scale = m.Scale;
@@ -268,7 +276,9 @@ public class ArmatureRenderLink : RenderLinkBase<Armature>
 {
     public GameObject root;
 
-    GameObject[] children = new GameObject[0];
+    public GameObject[] children = new GameObject[0];
+
+    public event Action ChildrenReload;
 
     public override void Init()
     {
@@ -276,6 +286,9 @@ public class ArmatureRenderLink : RenderLinkBase<Armature>
         {
             root = new GameObject("Armature");
             root.transform.parent = EngineRunner._.Root.transform;
+            root.transform.localPosition = Vector3.zero;
+            root.transform.localRotation = Quaternion.identity;
+            root.transform.localScale = Vector3.one;
             RenderingComponent.ArmatureEntitys.Changed += ArmatureEntitys_Changed;
             ArmatureEntitys_Changed(null);
         });
@@ -288,15 +301,12 @@ public class ArmatureRenderLink : RenderLinkBase<Armature>
         {
             return;
         }
-        root.transform.localPosition = Vector3.zero;
-        root.transform.localRotation = Quaternion.identity;
-        root.transform.localScale = Vector3.one;
-        var minval = Math.Min(RenderingComponent.ArmatureEntitys.Count, children.Length);
+        EntityHelpers.SetPosFromEntity(root.transform, RenderingComponent.Entity);
+       var minval = Math.Min(RenderingComponent.ArmatureEntitys.Count, children.Length);
         for (int i = 0; i < minval; i++)
         {
-            EntityHelpers.SetPosFromEntity(children[i].transform, RenderingComponent.ArmatureEntitys[i].Target ?? RenderingComponent.Entity);
+            EntityHelpers.SetPosFromEntity(children[i].transform, RenderingComponent.ArmatureEntitys[i].Target ?? RenderingComponent.Entity,RenderingComponent.Entity);
         }
-        EntityHelpers.SetPosFromEntity(root.transform, RenderingComponent.Entity);
     }
 
     private void ArmatureEntitys_Changed(IChangeable obj)
@@ -315,6 +325,7 @@ public class ArmatureRenderLink : RenderLinkBase<Armature>
                     children[i] = new GameObject(RenderingComponent.ArmatureEntitys[i].Target?.name.Value ?? "Null");
                     children[i].transform.parent = root.transform;
                 }
+                ChildrenReload?.Invoke();
             });
         });
     }
@@ -397,17 +408,55 @@ public class UnitySkinnedMeshRender : RenderLinkBase<SkinnedMeshRender>, IUnityM
         });
     }
 
+    public ArmatureRenderLink LastArmatureRenderLink;
+
     private void Armature_Changed(IChangeable obj)
     {
         EngineRunner._.RunonMainThread(() =>
         {
+
+            if (LastArmatureRenderLink is not null)
+            {
+                LastArmatureRenderLink.ChildrenReload -= UnitySkinnedMeshRender_ChildrenReload;
+                return;
+            }
             if (RenderingComponent.Armature.Target is null)
             {
                 meshRenderer.rootBone = null;
                 return;
             }
+            ((ArmatureRenderLink)RenderingComponent.Armature.Target.RenderLink).ChildrenReload += UnitySkinnedMeshRender_ChildrenReload;
+            LastArmatureRenderLink = ((ArmatureRenderLink)RenderingComponent.Armature.Target.RenderLink);
             meshRenderer.rootBone = ((ArmatureRenderLink)RenderingComponent.Armature.Target.RenderLink).root.transform;
+            UnitySkinnedMeshRender_ChildrenReload();
         });
+    }
+
+    private void UnitySkinnedMeshRender_ChildrenReload()
+    {
+        if(meshRenderer.sharedMesh is null)
+        {
+            meshRenderer.bones = Array.Empty<Transform>();
+            return;
+        }
+        if (RenderingComponent.Armature.Target is null)
+        {
+            meshRenderer.bones = Array.Empty<Transform>();
+            return;
+        }
+        var newTransForms = new Transform[meshRenderer.sharedMesh.bindposes.Length];
+        for (int i = 0; i < newTransForms.Length; i++)
+        {
+            if(i >= ((ArmatureRenderLink)RenderingComponent.Armature.Target.RenderLink).children.Length)
+            {
+                newTransForms[i] = ((ArmatureRenderLink)RenderingComponent.Armature.Target.RenderLink).root.transform;
+            }
+            else
+            {
+                newTransForms[i] = ((ArmatureRenderLink)RenderingComponent.Armature.Target.RenderLink).children[i].transform;
+            }
+        }
+        meshRenderer.bones = newTransForms;
     }
 
     private void LightProbs_Changed(IChangeable obj)
@@ -469,6 +518,7 @@ public class UnitySkinnedMeshRender : RenderLinkBase<SkinnedMeshRender>, IUnityM
                 ((UnityMeshHolder)obj.mesh).LoadIn((mesh) =>
                 {
                     meshRenderer.sharedMesh = (Mesh)mesh;
+                    UnitySkinnedMeshRender_ChildrenReload();
                 });
             }
         });
