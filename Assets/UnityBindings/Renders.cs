@@ -427,7 +427,14 @@ public class UnitySkinnedMeshRender : RenderLinkBase<SkinnedMeshRender>, IUnityM
             }
             ((ArmatureRenderLink)RenderingComponent.Armature.Target.RenderLink).ChildrenReload += UnitySkinnedMeshRender_ChildrenReload;
             LastArmatureRenderLink = ((ArmatureRenderLink)RenderingComponent.Armature.Target.RenderLink);
-            meshRenderer.rootBone = ((ArmatureRenderLink)RenderingComponent.Armature.Target.RenderLink).root.transform;
+            if(((ArmatureRenderLink)RenderingComponent.Armature.Target.RenderLink).children.Length == 0)
+            {
+                meshRenderer.rootBone = ((ArmatureRenderLink)RenderingComponent.Armature.Target.RenderLink).root.transform;
+            }
+            else
+            {
+                meshRenderer.rootBone = ((ArmatureRenderLink)RenderingComponent.Armature.Target.RenderLink).children[0].transform;
+            }
             UnitySkinnedMeshRender_ChildrenReload();
         });
     }
@@ -436,12 +443,12 @@ public class UnitySkinnedMeshRender : RenderLinkBase<SkinnedMeshRender>, IUnityM
     {
         if(meshRenderer.sharedMesh is null)
         {
-            meshRenderer.bones = Array.Empty<Transform>();
+            meshRenderer.bones = null;
             return;
         }
         if (RenderingComponent.Armature.Target is null)
         {
-            meshRenderer.bones = Array.Empty<Transform>();
+            meshRenderer.bones = null;
             return;
         }
         var newTransForms = new Transform[meshRenderer.sharedMesh.bindposes.Length];

@@ -249,22 +249,22 @@ public class UnityMesh : IRMesh
             if (rmesh is IComplexMesh complexMesh)
             {
                 var cvertices = new Vector3[complexMesh.Vertices.Count];
-                Parallel.For(0, complexMesh.Vertices.Count, (i) =>
+                for (int i = 0; i < complexMesh.Vertices.Count; i++)
                 {
                     cvertices[i] = new Vector3(complexMesh.Vertices[i].x, complexMesh.Vertices[i].y, complexMesh.Vertices[i].z);
-                });
+                }
                 var cnormals = new Vector3[complexMesh.Normals.Count];
-                Parallel.For(0, complexMesh.Normals.Count, (i) =>
+                for (int i = 0; i < complexMesh.Normals.Count; i++)
                 {
                     cnormals[i] = new Vector3(complexMesh.Normals[i].x, complexMesh.Normals[i].y, complexMesh.Normals[i].z);
-                });
+                }
                 var ctangents = new Vector4[complexMesh.Tangents.Count];
-                Parallel.For(0, complexMesh.Tangents.Count, (i) =>
+                for (int i = 0; i < complexMesh.Tangents.Count; i++)
                 {
                     var tangent = complexMesh.Tangents[i];
                     var crossnt = complexMesh.Normals[i].Cross(tangent);
                     ctangents[i] = new Vector4(tangent.x, tangent.y, tangent.z, (crossnt.Dot(complexMesh.BiTangents[i]) <= 0f) ? 1 : (-1));
-                });
+                }
                 var cuv = new List<Vector3>[complexMesh.TexCoords.Length];
                 for (int i = 0; i < complexMesh.TexCoords.Length; i++)
                 {
@@ -309,18 +309,19 @@ public class UnityMesh : IRMesh
                             m00 = Bone.OffsetMatrix.m.M11,
                             m01 = Bone.OffsetMatrix.m.M12,
                             m02 = Bone.OffsetMatrix.m.M13,
-                            m03 = Bone.OffsetMatrix.m.M21,
-                            m10 = Bone.OffsetMatrix.m.M22,
-                            m11 = Bone.OffsetMatrix.m.M23,
-                            m12 = Bone.OffsetMatrix.m.M24,
-                            m13 = Bone.OffsetMatrix.m.M31,
-                            m20 = Bone.OffsetMatrix.m.M32,
-                            m21 = Bone.OffsetMatrix.m.M33,
-                            m22 = Bone.OffsetMatrix.m.M34,
-                            m23 = Bone.OffsetMatrix.m.M41,
+                            m03 = Bone.OffsetMatrix.m.M14,
+                            m10 = Bone.OffsetMatrix.m.M21,
+                            m11 = Bone.OffsetMatrix.m.M22,
+                            m12 = Bone.OffsetMatrix.m.M23,
+                            m13 = Bone.OffsetMatrix.m.M24,
+                            m20 = Bone.OffsetMatrix.m.M31,
+                            m21 = Bone.OffsetMatrix.m.M32,
+                            m22 = Bone.OffsetMatrix.m.M33,
+                            m23 = Bone.OffsetMatrix.m.M34,
+                            m30 = Bone.OffsetMatrix.m.M41,
                             m31 = Bone.OffsetMatrix.m.M42,
                             m32 = Bone.OffsetMatrix.m.M43,
-                            m33 = Bone.OffsetMatrix.m.M44,
+                            m33 = Bone.OffsetMatrix.m.M44
                         };
                         foreach (var vertexWe in Bone.VertexWeights)
                         {
@@ -337,25 +338,29 @@ public class UnityMesh : IRMesh
                     foreach (var item in complexMesh.MeshAttachments)
                     {
                         var svertices = new Vector3[complexMesh.VertexCount];
-                        Parallel.For(0, Math.Min(item.Vertices.Count, complexMesh.VertexCount), (i) =>
-                        {
+                        var smallist = Math.Min(item.Vertices.Count, complexMesh.VertexCount);
+                        for (int i = 0; i < smallist; i++) { 
                             svertices[i] = new Vector3(item.Vertices[i].x, item.Vertices[i].y, item.Vertices[i].z) - cvertices[i];
-                        });
+                        }
                         var snormals = new Vector3[complexMesh.VertexCount];
-                        Parallel.For(0, Math.Min(item.Normals.Count, complexMesh.VertexCount), (i) =>
+                        var smallistnorm = Math.Min(item.Normals.Count, complexMesh.VertexCount);
+                        for (int i = 0; i < smallistnorm; i++)
                         {
                             snormals[i] = new Vector3(item.Normals[i].x, item.Normals[i].y, item.Normals[i].z) - cnormals[i];
-                        });
+                        }
                         var stangents = new Vector3[complexMesh.VertexCount];
-                        Parallel.For(0, Math.Min(complexMesh.Tangents.Count, complexMesh.VertexCount), (i) =>
+                        var smallitsTang = Math.Min(complexMesh.Tangents.Count, complexMesh.VertexCount);
+                        for (int i = 0; i < smallitsTang; i++)
                         {
                             var tangent = item.Tangents[i];
                             stangents[i] = new Vector3(tangent.x - ctangents[i].x,tangent.y - ctangents[i].y, tangent.z - ctangents[i].z);
-                        });
+                        }
                         mesh.AddBlendShapeFrame(item.Name, item.Weight, svertices, snormals, stangents);
                     }
                 }
-                var indexs = LoadIndexs(complexMesh).ToArray();
+                var sindexs = new List<int>(complexMesh.TriangleCount);
+                LoadIndexs(complexMesh, sindexs);
+                var indexs = sindexs.ToArray();
                 RLog.Info($"Loaded Mesh PrimitiveType{complexMesh.PrimitiveType}");
                 switch (complexMesh.PrimitiveType)
                 {
@@ -424,51 +429,51 @@ public class UnityMesh : IRMesh
         }
     }
 
-    private IEnumerable<int> LoadIndexs(IComplexMesh rmesh)
+    private void LoadIndexs(IComplexMesh rmesh,List<int> indexs)
     {
         foreach (var item in rmesh.Faces)
         {
             switch (rmesh.PrimitiveType)
             {
                 case RPrimitiveType.Point:
-                    if (item.Indices.Count > 0)
-                    {
-                        yield return item.Indices[0];
-                    }
+                    //if (item.Indices.Count > 0)
+                    //{
+                    //    indexs.Add(item.Indices[0]);
+                    //}
                     break;
                 case RPrimitiveType.Line:
-                    int? lastPoint = null;
-                    foreach (var point in item.Indices)
-                    {
-                        if(lastPoint is not null)
-                        {
-                            yield return (int)lastPoint;
-                        }
-                        yield return point;
-                        lastPoint = point;
-                    }
+                    //int? lastPoint = null;
+                    //foreach (var point in item.Indices)
+                    //{
+                    //    if(lastPoint is not null)
+                    //    {
+                    //        yield return (int)lastPoint;
+                    //    }
+                    //    yield return point;
+                    //    lastPoint = point;
+                    //}
                     break;
                 case RPrimitiveType.Triangle:
                     if (item.Indices.Count == 3)
                     {
-                        yield return item.Indices[0];
-                        yield return item.Indices[1];
-                        yield return item.Indices[2];
+                        indexs.Add(item.Indices[0]);
+                        indexs.Add(item.Indices[1]);
+                        indexs.Add(item.Indices[2]);
                     } else if (item.Indices.Count == 4)
                     {
-                        yield return item.Indices[0];
-                        yield return item.Indices[1];
-                        yield return item.Indices[2];
-                        yield return item.Indices[0];
-                        yield return item.Indices[2];
-                        yield return item.Indices[3];
+                        indexs.Add(item.Indices[0]);
+                        indexs.Add(item.Indices[1]);
+                        indexs.Add(item.Indices[2]);
+                        indexs.Add(item.Indices[0]);
+                        indexs.Add(item.Indices[2]);
+                        indexs.Add(item.Indices[3]);
                     }
                     break;
                 case RPrimitiveType.Polygon:
-                    foreach (var point in item.Indices)
-                    {
-                        yield return point;
-                    }
+                   //foreach (var point in item.Indices)
+                   //{
+                   //    yield return point;
+                   //}
                     break;
                 default:
                     break;
