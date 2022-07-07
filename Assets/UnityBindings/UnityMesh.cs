@@ -454,7 +454,8 @@ public class UnityMesh : IRMesh
                         yield return item.Indices[0];
                         yield return item.Indices[1];
                         yield return item.Indices[2];
-                    } else if (item.Indices.Count >= 4)
+                    }
+                    else if (item.Indices.Count >= 4)
                     {
                         yield return item.Indices[0];
                         yield return item.Indices[1];
