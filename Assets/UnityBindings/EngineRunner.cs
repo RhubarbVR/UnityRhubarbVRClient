@@ -226,6 +226,14 @@ public class EngineRunner : MonoBehaviour
         {
             Destroy(TouchCanvas);
         }
+        if (Assimp.AssimpUnity.IsAssimpAvailable)
+        {
+            Debug.Log("Assimp is Available");
+        }
+        else
+        {
+            Debug.Log("Assimp is not Available");
+        }
 
         if (!isInVR)
         {

@@ -39,7 +39,7 @@ public static class MitManager
             mit.LoadIn((unitymit) =>
             {
                 var e = new Material(unitymit);
-                e.renderQueue = Math.Min(e.renderQueue + depth,5000);
+                e.renderQueue = Math.Min(e.renderQueue + depth, 5000);
                 e.color *= new Color(color.r, color.g, color.b, color.a);
                 miter.material = e;
                 miter.ForceMaterialLoadedIn();
@@ -337,30 +337,43 @@ public class UnityMesh : IRMesh
                     mesh.ClearBlendShapes();
                     foreach (var item in complexMesh.MeshAttachments)
                     {
-                        var svertices = new Vector3[complexMesh.VertexCount];
-                        var smallist = Math.Min(item.Vertices.Count, complexMesh.VertexCount);
-                        for (int i = 0; i < smallist; i++) { 
-                            svertices[i] = new Vector3(item.Vertices[i].x, item.Vertices[i].y, item.Vertices[i].z) - cvertices[i];
-                        }
-                        var snormals = new Vector3[complexMesh.VertexCount];
-                        var smallistnorm = Math.Min(item.Normals.Count, complexMesh.VertexCount);
-                        for (int i = 0; i < smallistnorm; i++)
+                        try
                         {
-                            snormals[i] = new Vector3(item.Normals[i].x, item.Normals[i].y, item.Normals[i].z) - cnormals[i];
+                            var svertices = new Vector3[complexMesh.VertexCount];
+                            var smallist = Math.Min(item.Vertices.Count, complexMesh.VertexCount);
+                            for (int i = 0; i < smallist; i++)
+                            {
+                                svertices[i] = new Vector3(item.Vertices[i].x, item.Vertices[i].y, item.Vertices[i].z) - cvertices[i];
+                            }
+                            var snormals = new Vector3[complexMesh.VertexCount];
+                            var smallistnorm = Math.Min(item.Normals.Count, complexMesh.VertexCount);
+                            for (int i = 0; i < smallistnorm; i++)
+                            {
+                                snormals[i] = new Vector3(item.Normals[i].x, item.Normals[i].y, item.Normals[i].z) - cnormals[i];
+                            }
+                            var stangents = new Vector3[complexMesh.VertexCount];
+                            var smallitsTang = Math.Min(complexMesh.Tangents.Count, complexMesh.VertexCount);
+                            for (int i = 0; i < smallitsTang; i++)
+                            {
+                                var tangent = item.Tangents[i];
+                                stangents[i] = new Vector3(tangent.x - ctangents[i].x, tangent.y - ctangents[i].y, tangent.z - ctangents[i].z);
+                            }
+                            mesh.AddBlendShapeFrame(item.Name, item.Weight, svertices, snormals, stangents);
                         }
-                        var stangents = new Vector3[complexMesh.VertexCount];
-                        var smallitsTang = Math.Min(complexMesh.Tangents.Count, complexMesh.VertexCount);
-                        for (int i = 0; i < smallitsTang; i++)
-                        {
-                            var tangent = item.Tangents[i];
-                            stangents[i] = new Vector3(tangent.x - ctangents[i].x,tangent.y - ctangents[i].y, tangent.z - ctangents[i].z);
-                        }
-                        mesh.AddBlendShapeFrame(item.Name, item.Weight, svertices, snormals, stangents);
+                        catch { }
                     }
                 }
                 var sindexs = new List<int>(complexMesh.TriangleCount);
                 LoadIndexs(complexMesh, sindexs);
                 var indexs = sindexs.ToArray();
+                if (cvertices.Length > (ushort.MaxValue - 10))
+                {
+                    mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+                }
+                else
+                {
+                    mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt16;
+                }
                 RLog.Info($"Loaded Mesh PrimitiveType{complexMesh.PrimitiveType}");
                 switch (complexMesh.PrimitiveType)
                 {
@@ -419,17 +432,25 @@ public class UnityMesh : IRMesh
             mesh.SetUVs(0, uv);
 
             mesh.SetColors(colors);
+            if (vertices.Length > (ushort.MaxValue - 10))
+            {
+                mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+            }
+            else
+            {
+                mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt16;
+            }
             mesh.SetTriangles(rmesh.RenderIndices().ToArray(), 0);
 
             mesh.RecalculateBounds();
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             RLog.Err($"Mesh Update Failed Error:{ex}");
         }
     }
 
-    private void LoadIndexs(IComplexMesh rmesh,List<int> indexs)
+    private void LoadIndexs(IComplexMesh rmesh, List<int> indexs)
     {
         foreach (var item in rmesh.Faces)
         {
@@ -459,7 +480,8 @@ public class UnityMesh : IRMesh
                         indexs.Add(item.Indices[0]);
                         indexs.Add(item.Indices[1]);
                         indexs.Add(item.Indices[2]);
-                    } else if (item.Indices.Count == 4)
+                    }
+                    else if (item.Indices.Count == 4)
                     {
                         indexs.Add(item.Indices[0]);
                         indexs.Add(item.Indices[1]);
@@ -470,10 +492,10 @@ public class UnityMesh : IRMesh
                     }
                     break;
                 case RPrimitiveType.Polygon:
-                   //foreach (var point in item.Indices)
-                   //{
-                   //    yield return point;
-                   //}
+                    //foreach (var point in item.Indices)
+                    //{
+                    //    yield return point;
+                    //}
                     break;
                 default:
                     break;
@@ -483,7 +505,7 @@ public class UnityMesh : IRMesh
 
     public void LoadMesh(RMesh meshtarget, IMesh rmesh)
     {
-        if(meshtarget.mesh is not null)
+        if (meshtarget.mesh is not null)
         {
             ((UnityMeshHolder)meshtarget.mesh).Action((mesh) =>
             {
@@ -498,7 +520,7 @@ public class UnityMesh : IRMesh
                 MeshLoadAction(mesh, rmesh);
                 return mesh;
             });
-        } 
+        }
     }
 
     public UnityMesh(EngineRunner engineRunner)
