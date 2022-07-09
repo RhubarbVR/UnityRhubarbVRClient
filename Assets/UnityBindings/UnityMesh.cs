@@ -41,6 +41,14 @@ public static class MitManager
                 var e = new Material(unitymit);
                 e.renderQueue = Math.Min(e.renderQueue + depth, 5000);
                 e.color *= new Color(color.r, color.g, color.b, color.a);
+                try
+                {
+                    e.enableInstancing = true;
+                }
+                catch
+                {
+                    RLog.Err("Failed to add Instancing");
+                }
                 miter.material = e;
                 miter.ForceMaterialLoadedIn();
             });
@@ -57,6 +65,14 @@ public static class MitManager
                 var e = new Material(mit.material);
                 e.renderQueue = Math.Min(e.renderQueue + depth, 5000);
                 e.color *= new Color(color.r, color.g, color.b, color.a);
+                try
+                {
+                    e.enableInstancing = true;
+                }
+                catch
+                {
+                    RLog.Err("Failed to add Instancing");
+                }
                 currentMit.material = e;
                 currentMit.ForceMaterialLoadedIn();
             });
@@ -394,14 +410,6 @@ public class UnityMesh : IRMesh
                 foreach (var item in complexMesh.SubMeshes)
                 {
                     currentIndex++;
-                    //mesh.SetSubMesh(currentIndex, new UnityEngine.Rendering.SubMeshDescriptor(0, item.Count, item.PrimitiveType switch
-                    //{
-                    //    RPrimitiveType.Triangle => MeshTopology.Triangles,
-                    //    RPrimitiveType.Point => MeshTopology.Points,
-                    //    RPrimitiveType.Line => MeshTopology.Lines,
-                    //    RPrimitiveType.Polygon => MeshTopology.Quads,
-                    //    _ => MeshTopology.Triangles,
-                    //}));
                     LoadSubMesh(mesh, item.PrimitiveType, item.Faces, currentIndex);
                 }
                 return;

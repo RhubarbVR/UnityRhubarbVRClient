@@ -25,6 +25,14 @@ public class UnityMaterialHolder
     {
         EngineRunner = engineRunner;
         material = MakeMit;
+        try
+        {
+            material.enableInstancing = true;
+        }
+        catch
+        {
+            RLog.Err("Failed to add Instancing");
+        }
         OnMaterialLoadedIn?.Invoke(material);
     }
     public UnityMaterialHolder(EngineRunner engineRunner,Func<Material> MakeMit)
@@ -33,6 +41,14 @@ public class UnityMaterialHolder
         engineRunner.RunonMainThread(() => 
         { 
             material = MakeMit();
+            try
+            {
+                material.enableInstancing = true;
+            }
+            catch
+            {
+                RLog.Err("Failed to add Instancing");
+            }
             OnMaterialLoadedIn?.Invoke(material);
         });
     }
