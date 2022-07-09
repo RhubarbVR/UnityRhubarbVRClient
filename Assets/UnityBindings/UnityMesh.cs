@@ -380,7 +380,6 @@ public class UnityMesh : IRMesh
                         catch { }
                     }
                 }
-                var indexs = LoadIndexs(complexMesh).ToArray();
                 if (cvertices.Length > (ushort.MaxValue))
                 {
                     mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
@@ -389,23 +388,21 @@ public class UnityMesh : IRMesh
                 {
                     mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt16;
                 }
-                RLog.Info($"Loaded Mesh PrimitiveType{complexMesh.PrimitiveType}");
-                switch (complexMesh.PrimitiveType)
+                mesh.subMeshCount = complexMesh.SubMeshes.Count() + 1;
+                LoadSubMesh(mesh, complexMesh.PrimitiveType, complexMesh.Faces, 0);
+                var currentIndex = 0;
+                foreach (var item in complexMesh.SubMeshes)
                 {
-                    case RPrimitiveType.Point:
-                        mesh.SetIndices(indexs, MeshTopology.Points, 0);
-                        break;
-                    case RPrimitiveType.Line:
-                        mesh.SetIndices(indexs, MeshTopology.Lines, 0);
-                        break;
-                    case RPrimitiveType.Triangle:
-                        mesh.SetIndices(indexs, MeshTopology.Triangles, 0);
-                        break;
-                    case RPrimitiveType.Polygon:
-                        mesh.SetIndices(indexs, MeshTopology.Quads, 0);
-                        break;
-                    default:
-                        break;
+                    currentIndex++;
+                    //mesh.SetSubMesh(currentIndex, new UnityEngine.Rendering.SubMeshDescriptor(0, item.Count, item.PrimitiveType switch
+                    //{
+                    //    RPrimitiveType.Triangle => MeshTopology.Triangles,
+                    //    RPrimitiveType.Point => MeshTopology.Points,
+                    //    RPrimitiveType.Line => MeshTopology.Lines,
+                    //    RPrimitiveType.Polygon => MeshTopology.Quads,
+                    //    _ => MeshTopology.Triangles,
+                    //}));
+                    LoadSubMesh(mesh, item.PrimitiveType, item.Faces, currentIndex);
                 }
                 return;
             }
@@ -465,11 +462,35 @@ public class UnityMesh : IRMesh
         }
     }
 
-    private IEnumerable<int> LoadIndexs(IComplexMesh rmesh)
+    private void LoadSubMesh(Mesh mesh, RPrimitiveType primitiveType, IEnumerable<IFace> faces,int index)
     {
-        foreach (var item in rmesh.Faces)
+        var indexs = LoadIndexs(primitiveType,faces).ToArray();
+        switch (primitiveType)
         {
-            switch (rmesh.PrimitiveType)
+            case RPrimitiveType.Point:
+                mesh.SetIndices(indexs, MeshTopology.Points, index);
+                break;
+            case RPrimitiveType.Line:
+                mesh.SetIndices(indexs, MeshTopology.Lines, index);
+                break;
+            case RPrimitiveType.Triangle:
+                mesh.SetIndices(indexs, MeshTopology.Triangles, index);
+                break;
+            case RPrimitiveType.Polygon:
+                mesh.SetIndices(indexs, MeshTopology.Quads, index);
+                break;
+            default:
+                break;
+        }
+        RLog.Info($"Loaded SubMesh PrimitiveType{primitiveType} {index}");
+
+    }
+
+    private IEnumerable<int> LoadIndexs(RPrimitiveType primitiveType, IEnumerable<IFace> faces)
+    {
+        foreach (var item in faces)
+        {
+            switch (primitiveType)
             {
                 case RPrimitiveType.Point:
                     if (item.Indices.Count > 0)
