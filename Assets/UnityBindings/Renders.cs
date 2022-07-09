@@ -393,7 +393,8 @@ public class UnitySkinnedMeshRender : RenderLinkBase<SkinnedMeshRender>, IUnityM
             Materials_Changed(null);
             RenderingComponent.Armature.Changed += Armature_Changed;
             Armature_Changed(null);
-            RenderingComponent.Bounds.Changed += Bounds_Changed;
+            RenderingComponent.BoundsBox.Changed += Bounds_Changed;
+            RenderingComponent.AutoBounds.Changed += Bounds_Changed;
             Bounds_Changed(null);
         });
     }
@@ -402,9 +403,24 @@ public class UnitySkinnedMeshRender : RenderLinkBase<SkinnedMeshRender>, IUnityM
     {
         EngineRunner._.RunonMainThread(() =>
         {
-            var center = RenderingComponent.Bounds.Value.Center;
-            var exstends = RenderingComponent.Bounds.Value.Extents;
-            meshRenderer.localBounds = new Bounds(new Vector3(center.x, center.y, center.z), new Vector3(exstends.x, exstends.y, exstends.z));
+            if (RenderingComponent.AutoBounds.Value)
+            {
+                meshRenderer.ResetLocalBounds();
+                meshRenderer.ResetBounds();
+                var server = RenderingComponent.mesh.Asset?.BoundingBox ?? AxisAlignedBox3f.Empty;
+                server.Scale(new Vector3f(1.5f));
+                meshRenderer.localBounds = new Bounds
+                {
+                    min = new Vector3(server.Min.x, server.Min.y, server.Min.z),
+                    max = new Vector3(server.Max.x, server.Max.y, server.Max.z),
+                };
+            }
+            else
+            {
+                var center = RenderingComponent.BoundsBox.Value.Center;
+                var exstends = RenderingComponent.BoundsBox.Value.Extents;
+                meshRenderer.localBounds = new Bounds(new Vector3(center.x, center.y, center.z), new Vector3(exstends.x, exstends.y, exstends.z));
+            }
         });
     }
 
@@ -519,6 +535,13 @@ public class UnitySkinnedMeshRender : RenderLinkBase<SkinnedMeshRender>, IUnityM
             if (obj is null)
             {
                 meshRenderer.sharedMesh = null;
+                var server = AxisAlignedBox3f.Empty;
+                server.Scale(new Vector3f(1.5f));
+                meshRenderer.localBounds = new Bounds
+                {
+                    min = new Vector3(server.Min.x, server.Min.y, server.Min.z),
+                    max = new Vector3(server.Max.x, server.Max.y, server.Max.z),
+                };
             }
             else
             {
@@ -526,6 +549,13 @@ public class UnitySkinnedMeshRender : RenderLinkBase<SkinnedMeshRender>, IUnityM
                 {
                     meshRenderer.sharedMesh = (Mesh)mesh;
                     UnitySkinnedMeshRender_ChildrenReload();
+                    var server = RenderingComponent.mesh.Asset?.BoundingBox ?? AxisAlignedBox3f.Empty;
+                    server.Scale(new Vector3f(1.5f));
+                    meshRenderer.localBounds = new Bounds
+                    {
+                        min = new Vector3(server.Min.x, server.Min.y, server.Min.z),
+                        max = new Vector3(server.Max.x, server.Max.y, server.Max.z),
+                    };
                 });
             }
         });

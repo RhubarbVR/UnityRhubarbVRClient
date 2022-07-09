@@ -124,6 +124,19 @@ public class UnityMeshHolder
 
 public static class BoneWeightAddons
 {
+    public static void Normalize(this ref BoneWeight bone)
+    {
+        float totalWeight = bone.weight0 + bone.weight1 + bone.weight2 + bone.weight3;
+        if (totalWeight > 0f)
+        {
+            float num = 1f / totalWeight;
+            bone.weight0 *= num;
+            bone.weight1 *= num;
+            bone.weight2 *= num;
+            bone.weight3 *= num;
+        }
+    }
+
     public static void AddBone(this ref BoneWeight bone, int boneIndex, float boneWeight)
     {
         var targetLayer = -1;
@@ -214,7 +227,7 @@ public class UnityMesh : IRMesh
 
     public UnityMeshHolder LoadedQuad = MakeQuad();
 
-    public RMesh Quad => new(LoadedQuad);
+    public RMesh Quad => new(LoadedQuad,false);
 
     public EngineRunner EngineRunner { get; }
 
@@ -329,6 +342,10 @@ public class UnityMesh : IRMesh
                         }
                         BoneIndex++;
                     }
+                    for (int i = 0; i < BoneVertexWights.Length; i++)
+                    {
+                        BoneVertexWights[i].Normalize();
+                    }
                     mesh.boneWeights = BoneVertexWights;
                     mesh.bindposes = bonePoses;
                 }
@@ -363,10 +380,8 @@ public class UnityMesh : IRMesh
                         catch { }
                     }
                 }
-                var sindexs = new List<int>(complexMesh.TriangleCount);
-                LoadIndexs(complexMesh, sindexs);
-                var indexs = sindexs.ToArray();
-                if (cvertices.Length > (ushort.MaxValue - 10))
+                var indexs = LoadIndexs(complexMesh).ToArray();
+                if (cvertices.Length > (ushort.MaxValue))
                 {
                     mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
                 }
@@ -450,52 +465,61 @@ public class UnityMesh : IRMesh
         }
     }
 
-    private void LoadIndexs(IComplexMesh rmesh, List<int> indexs)
+    private IEnumerable<int> LoadIndexs(IComplexMesh rmesh)
     {
         foreach (var item in rmesh.Faces)
         {
             switch (rmesh.PrimitiveType)
             {
                 case RPrimitiveType.Point:
-                    //if (item.Indices.Count > 0)
-                    //{
-                    //    indexs.Add(item.Indices[0]);
-                    //}
+                    if (item.Indices.Count > 0)
+                    {
+                        yield return (item.Indices[0]);
+                    }
                     break;
                 case RPrimitiveType.Line:
-                    //int? lastPoint = null;
-                    //foreach (var point in item.Indices)
-                    //{
-                    //    if(lastPoint is not null)
-                    //    {
-                    //        yield return (int)lastPoint;
-                    //    }
-                    //    yield return point;
-                    //    lastPoint = point;
-                    //}
+                    int? lastPoint = null;
+                    foreach (var point in item.Indices)
+                    {
+                        if(lastPoint is not null)
+                        {
+                            yield return (int)lastPoint;
+                        }
+                        yield return point;
+                        lastPoint = point;
+                    }
                     break;
                 case RPrimitiveType.Triangle:
                     if (item.Indices.Count == 3)
                     {
-                        indexs.Add(item.Indices[0]);
-                        indexs.Add(item.Indices[1]);
-                        indexs.Add(item.Indices[2]);
+                        yield return (item.Indices[0]);
+                        yield return (item.Indices[1]);
+                        yield return (item.Indices[2]);
                     }
                     else if (item.Indices.Count == 4)
                     {
-                        indexs.Add(item.Indices[0]);
-                        indexs.Add(item.Indices[1]);
-                        indexs.Add(item.Indices[2]);
-                        indexs.Add(item.Indices[0]);
-                        indexs.Add(item.Indices[2]);
-                        indexs.Add(item.Indices[3]);
+                        yield return (item.Indices[0]);
+                        yield return (item.Indices[1]);
+                        yield return (item.Indices[2]);
+                        yield return (item.Indices[0]);
+                        yield return (item.Indices[2]);
+                        yield return (item.Indices[3]);
+                    }
+                    else
+                    {
+                        for (int i = 1; i < (item.Indices.Count - 1); i++)
+                        {
+                            yield return (item.Indices[i]);
+                            yield return (item.Indices[i + 1]);
+                            yield return (item.Indices[0]);
+                        }
                     }
                     break;
                 case RPrimitiveType.Polygon:
-                    //foreach (var point in item.Indices)
-                    //{
-                    //    yield return point;
-                    //}
+                    foreach (var point in item.Indices)
+                    {
+                        yield return point;
+                    }
                     break;
                 default:
                     break;
@@ -517,6 +541,10 @@ public class UnityMesh : IRMesh
             meshtarget.mesh = new UnityMeshHolder(EngineRunner, () =>
             {
                 var mesh = new Mesh();
+                if (meshtarget.Dynamic)
+                {
+                    mesh.MarkDynamic();
+                }
                 MeshLoadAction(mesh, rmesh);
                 return mesh;
             });
