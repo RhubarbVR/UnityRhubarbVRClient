@@ -207,7 +207,7 @@ GameObject:
   - component: {fileID: 803889020}
   - component: {fileID: 803889021}
   m_Layer: 0
-  m_Name: cAMhOLDER
+  m_Name: HeadCam
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -713,7 +713,7 @@ GameObject:
   - component: {fileID: 1725982594}
   - component: {fileID: 1725982593}
   m_Layer: 0
-  m_Name: XRRig
+  m_Name: UserView
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
