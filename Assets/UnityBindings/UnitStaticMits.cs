@@ -316,22 +316,37 @@ internal class UnitStaticMits : IStaticMaterialManager
                 mit.mainTexture = ((UnityTexture2DHolder)value.Tex).texture;
             });
         }
+        public bool dull;
+        public Transparency tra;
 
-        public Material LoadNewMit(Transparency transparency)
+        public Material LoadNewMit(Transparency transparency,bool dullSided)
         {
-            Material mit = transparency switch
-            {
-                Transparency.Blend => new Material(EngineRunner._.UnlitTransparentBlend),
-                Transparency.Add => new Material(EngineRunner._.UnlitTransparentAdditive),
-                _ => new Material(EngineRunner._.Unlit),
-            };
+            dull = dullSided;
+            tra = transparency;
+            Material mit = (dull) ?
+                transparency switch
+                {
+                    Transparency.Blend => new Material(EngineRunner._.TwoSidedUnlitTransparentBlend),
+                    Transparency.Add => new Material(EngineRunner._.TwoSidedUnlitTransparentAdditive),
+                    _ => new Material(EngineRunner._.TwoSidedUnlit),
+                }:
+                transparency switch
+                {
+                    Transparency.Blend => new Material(EngineRunner._.UnlitTransparentBlend),
+                    Transparency.Add => new Material(EngineRunner._.UnlitTransparentAdditive),
+                    _ => new Material(EngineRunner._.Unlit),
+                };
             mit.color = YourData.material.color;
             mit.mainTexture = YourData.material.mainTexture;
             return mit;
         }
 
-        public Transparency Transparency { set => YourData.Action((mit) => { YourData.material = LoadNewMit(value); Object.Destroy(mit); }); }
+        public Transparency Transparency { set => YourData.Action((mit) => { YourData.material = LoadNewMit(value, dull); Object.Destroy(mit); }); }
         public Colorf Tint { set => YourData.Action((mit) => mit.color = new Color(value.r, value.g, value.b, value.a)); }
+        public bool DullSided
+        {
+            set => YourData.Action((mit) => { YourData.material = LoadNewMit(tra, value); Object.Destroy(mit); });
+        }
     }
 
     public ITextMaterial CreateTextMaterial()

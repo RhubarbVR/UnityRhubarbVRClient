@@ -34,7 +34,7 @@ public class EngineRunner : MonoBehaviour
     }
     public void DashOpen()
     {
-        RInput.ingectedkeys.Add(Key.Ctrl, new RInput.InjectKey(true,true));
+        RInput.ingectedkeys.Add(Key.Ctrl, new RInput.InjectKey(true, true));
         RInput.ingectedkeys.Add(Key.Space, new RInput.InjectKey(true, true));
         RWorld.ExecuteOnEndOfFrame(() =>
         {
@@ -77,6 +77,9 @@ public class EngineRunner : MonoBehaviour
 
     public GameObject RightController;
     public Shader PBRShader;
+    public Shader TwoSidedUnlit;
+    public Shader TwoSidedUnlitTransparentAdditive;
+    public Shader TwoSidedUnlitTransparentBlend;
     public Shader Unlit;
     public Shader UnlitTransparentAdditive;
     public Shader UnlitTransparentBlend;
@@ -291,7 +294,8 @@ public class EngineRunner : MonoBehaviour
                 engine.Dispose();
             }
         }
-        catch {
+        catch
+        {
             Debug.Log("Failed to start Rhubarb CleanUp");
         }
     }
@@ -310,62 +314,6 @@ public class EngineRunner : MonoBehaviour
         public bool UsedThisFrame { get; set; }
     }
 
-    public class TempMesh : IRemoveLater
-    {
-        public bool UsedThisFrame { get; set; } = true;
-
-        public GameObject gameObject;
-
-        public MeshFilter meshfilter;
-
-        public MeshRenderer meshRenderer;
-
-        Material targetMit;
-
-
-        public void Reload(Mesh mesh, Material target, Matrix p, RenderLayer layer)
-        {
-            if (targetMit != target)
-            {
-                targetMit = target;
-            }
-            UsedThisFrame = true;
-            meshRenderer.renderingLayerMask = (uint)layer;
-            meshRenderer.material = target;
-            meshfilter.mesh = mesh;
-            var pos = p.Translation;
-            var rot = p.Rotation;
-            var scale = p.Scale;
-            gameObject.transform.localPosition = new Vector3(float.IsNaN(pos.x) ? 0 : pos.x, float.IsNaN(pos.y) ? 0 : pos.y, float.IsNaN(pos.z) ? 0 : pos.z);
-            gameObject.transform.localRotation = new Quaternion(float.IsNaN(rot.x) ? 0 : rot.x, float.IsNaN(rot.y) ? 0 : rot.y, float.IsNaN(rot.z) ? 0 : rot.z, float.IsNaN(rot.w) ? 0 : rot.w);
-            gameObject.transform.localScale = new Vector3(float.IsNaN(scale.x) ? 0 : scale.x, float.IsNaN(scale.y) ? 0 : scale.y, float.IsNaN(scale.z) ? 0 : scale.z);
-        }
-
-        public TempMesh(string id, Mesh mesh, Material target, Matrix p, RenderLayer layer)
-        {
-            targetMit = target;
-            gameObject = new GameObject("TempMesh" + id);
-            gameObject.transform.parent = EngineRunner._.Root.transform;
-            meshRenderer = gameObject.AddComponent<MeshRenderer>();
-            meshRenderer.renderingLayerMask = (uint)layer;
-            meshRenderer.material = target;
-            meshfilter = gameObject.AddComponent<MeshFilter>();
-            meshfilter.mesh = mesh;
-            var pos = p.Translation;
-            var rot = p.Rotation;
-            var scale = p.Scale;
-            gameObject.transform.localPosition = new Vector3(float.IsNaN(pos.x) ? 0 : pos.x, float.IsNaN(pos.y) ? 0 : pos.y, float.IsNaN(pos.z) ? 0 : pos.z);
-            gameObject.transform.localRotation = new Quaternion(float.IsNaN(rot.x) ? 0 : rot.x, float.IsNaN(rot.y) ? 0 : rot.y, float.IsNaN(rot.z) ? 0 : rot.z, float.IsNaN(rot.w) ? 0 : rot.w);
-            gameObject.transform.localScale = new Vector3(float.IsNaN(scale.x) ? 0 : scale.x, float.IsNaN(scale.y) ? 0 : scale.y, (float.IsNaN(scale.z) ? 0 : scale.z));
-        }
-
-        public void Remove()
-        {
-            UnityEngine.Object.Destroy(gameObject);
-        }
-    }
-
-    public Dictionary<string, IRemoveLater> tempObjects = new();
 
     public void Draw(string id, Mesh mesh, Material target, Matrix p, RenderLayer layer)
     {
@@ -373,15 +321,25 @@ public class EngineRunner : MonoBehaviour
         {
             return;
         }
-        id = "Mesh." + id;
-        if (!tempObjects.ContainsKey(id))
+        Graphics.DrawMesh(mesh, Matrix4x4.Scale(new Vector3(1, 1, -1)) * new Matrix4x4
         {
-            tempObjects.Add(id, new TempMesh(id, mesh, target, p, layer));
-        }
-        else
-        {
-            ((TempMesh)tempObjects[id]).Reload(mesh, target, p, layer);
-        }
+            m00 = p.m.M11,
+            m01 = p.m.M21,
+            m02 = p.m.M31,
+            m03 = p.m.M41,
+            m10 = p.m.M12,
+            m11 = p.m.M22,
+            m12 = p.m.M32,
+            m13 = p.m.M42,
+            m20 = p.m.M13,
+            m21 = p.m.M23,
+            m22 = p.m.M33,
+            m23 = p.m.M43,
+            m30 = p.m.M14,
+            m31 = p.m.M24,
+            m32 = p.m.M34,
+            m33 = p.m.M44,
+        }, target, (int)layer,null,0,null,false,false,false);
     }
     void MainThreadUpdate()
     {
@@ -438,23 +396,6 @@ public class EngineRunner : MonoBehaviour
         var calculatedDelta = UnityEngine.InputSystem.Mouse.current.delta.ReadValue();
         calculatedDelta += new Vector2(Right.Vertical, Right.Horizontal);
         MouseDelta = new Vector2f(calculatedDelta.x * speedMultply, calculatedDelta.y * -speedMultply);
-        foreach (var item in tempObjects)
-        {
-            item.Value.UsedThisFrame = false;
-        }
         engine.Step();
-        var removethisframe = new List<string>();
-        foreach (var item in tempObjects)
-        {
-            if (!item.Value.UsedThisFrame)
-            {
-                removethisframe.Add(item.Key);
-                item.Value.Remove();
-            }
-        }
-        foreach (var item in removethisframe)
-        {
-            tempObjects.Remove(item);
-        }
     }
 }

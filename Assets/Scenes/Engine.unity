@@ -526,7 +526,7 @@ Camera:
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 15
+    m_Bits: 31
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -1601,6 +1601,11 @@ MonoBehaviour:
   LeftController: {fileID: 1728657555}
   RightController: {fileID: 541096545}
   PBRShader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
+  TwoSidedUnlit: {fileID: 4800000, guid: a5bcaf12d95d894429b14c5f2ceb0c9f, type: 3}
+  TwoSidedUnlitTransparentAdditive: {fileID: 4800000, guid: 5c77ce2e63580694abff63a740b3cb3f,
+    type: 3}
+  TwoSidedUnlitTransparentBlend: {fileID: 4800000, guid: 2bd6a8f9f98621c429fd0e0c89113549,
+    type: 3}
   Unlit: {fileID: 4800000, guid: 8bc8c01374a21e94fbe7b230f43abb95, type: 3}
   UnlitTransparentAdditive: {fileID: 4800000, guid: 0aea1af38b7765b43bd646ff9957f4f7,
     type: 3}
