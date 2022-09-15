@@ -17,25 +17,25 @@ namespace Assets.UnityBindings
 
         public override void ContinueInit()
         {
-            RenderingComponent.LightType.Changed += LightType_Changed;
+            LinkedComp.LightType.Changed += LightType_Changed;
             LightType_Changed(null);
-            RenderingComponent.Range.Changed += Range_Changed;
+            LinkedComp.Range.Changed += Range_Changed;
             Range_Changed(null);
-            RenderingComponent.SpotAngle.Changed += SpotAngle_Changed;
+            LinkedComp.SpotAngle.Changed += SpotAngle_Changed;
             SpotAngle_Changed(null);
-            RenderingComponent.Size.Changed += Size_Changed;
+            LinkedComp.Size.Changed += Size_Changed;
             Size_Changed(null);
-            RenderingComponent.Intensity.Changed += Intensity_Changed;
+            LinkedComp.Intensity.Changed += Intensity_Changed;
             Intensity_Changed(null);
-            RenderingComponent.IndirectMultipiler.Changed += IndirectMultipiler_Changed;
+            LinkedComp.IndirectMultipiler.Changed += IndirectMultipiler_Changed;
             IndirectMultipiler_Changed(null);
-            RenderingComponent.Color.Changed += Color_Changed;
+            LinkedComp.Color.Changed += Color_Changed;
             Color_Changed(null);
-            RenderingComponent.ShadowType.Changed += ShadowType_Changed;
+            LinkedComp.ShadowType.Changed += ShadowType_Changed;
             ShadowType_Changed(null);
-            RenderingComponent.LightCookie.LoadChange += LightCookie_LoadChange;
+            LinkedComp.LightCookie.LoadChange += LightCookie_LoadChange;
             LightCookie_LoadChange(null);
-            RenderingComponent.Culling.Changed += Culling_Changed;
+            LinkedComp.Culling.Changed += Culling_Changed;
             Culling_Changed(null);
         }
 
@@ -43,7 +43,7 @@ namespace Assets.UnityBindings
         {
             EngineRunner._.RunonMainThread(() =>
             {
-                UnityComponent.renderingLayerMask = (int)RenderingComponent.Culling.Value;
+                UnityComponent.renderingLayerMask = (int)LinkedComp.Culling.Value;
             });
         }
 
@@ -51,7 +51,7 @@ namespace Assets.UnityBindings
         {
             EngineRunner._.RunonMainThread(() =>
             {
-                var value = RenderingComponent.LightCookie.Asset;
+                var value = LinkedComp.LightCookie.Asset;
                 if (value == null)
                 {
                     UnityComponent.cookie = null;
@@ -75,7 +75,7 @@ namespace Assets.UnityBindings
         {
             EngineRunner._.RunonMainThread(() =>
             {
-                UnityComponent.shadows = RenderingComponent.ShadowType.Value switch
+                UnityComponent.shadows = LinkedComp.ShadowType.Value switch
                 {
                     ShadowMode.Hard => LightShadows.Hard,
                     ShadowMode.Soft => LightShadows.Soft,
@@ -88,7 +88,7 @@ namespace Assets.UnityBindings
         {
             EngineRunner._.RunonMainThread(() =>
             {
-                var color = RenderingComponent.Color.Value;
+                var color = LinkedComp.Color.Value;
                 UnityComponent.color = new Color(color.r, color.g, color.b, color.a);
             });
         }
@@ -97,7 +97,7 @@ namespace Assets.UnityBindings
         {
             EngineRunner._.RunonMainThread(() =>
             {
-                UnityComponent.bounceIntensity = RenderingComponent.IndirectMultipiler;
+                UnityComponent.bounceIntensity = LinkedComp.IndirectMultipiler;
             });
         }
 
@@ -105,7 +105,7 @@ namespace Assets.UnityBindings
         {
             EngineRunner._.RunonMainThread(() =>
             {
-                UnityComponent.intensity = RenderingComponent.Intensity;
+                UnityComponent.intensity = LinkedComp.Intensity;
             });
         }
 
@@ -113,7 +113,7 @@ namespace Assets.UnityBindings
         {
             EngineRunner._.RunonMainThread(() =>
             {
-                UnityComponent.cookieSize = RenderingComponent.Size.Value;
+                UnityComponent.cookieSize = LinkedComp.Size.Value;
             });
         }
 
@@ -121,7 +121,7 @@ namespace Assets.UnityBindings
         {
             EngineRunner._.RunonMainThread(() =>
             {
-                UnityComponent.spotAngle = RenderingComponent.SpotAngle;
+                UnityComponent.spotAngle = LinkedComp.SpotAngle;
             });
         }
 
@@ -129,7 +129,7 @@ namespace Assets.UnityBindings
         {
             EngineRunner._.RunonMainThread(() =>
             {
-                UnityComponent.range = RenderingComponent.Range;
+                UnityComponent.range = LinkedComp.Range;
             });
         }
 
@@ -137,7 +137,7 @@ namespace Assets.UnityBindings
         {
             EngineRunner._.RunonMainThread(() =>
             {
-                UnityComponent.type = RenderingComponent.LightType.Value switch
+                UnityComponent.type = LinkedComp.LightType.Value switch
                 {
                     RLightType.Spot => LightType.Spot,
                     RLightType.Directional => LightType.Directional,

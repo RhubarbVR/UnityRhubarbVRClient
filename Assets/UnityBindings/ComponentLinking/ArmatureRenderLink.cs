@@ -20,7 +20,7 @@ namespace Assets.UnityBindings
 
         public override void StartContinueInit()
         {
-            RenderingComponent.ArmatureEntitys.Changed += ArmatureEntitys_Changed;
+            LinkedComp.ArmatureEntitys.Changed += ArmatureEntitys_Changed;
             ArmatureEntitys_Changed(null);
         }
 
@@ -35,7 +35,7 @@ namespace Assets.UnityBindings
 
         private void ArmatureEntitys_Changed(IChangeable obj)
         {
-            RWorld.ExecuteOnStartOfFrame(this, () =>
+            RUpdateManager.ExecuteOnStartOfFrame(this, () =>
             {
                 EngineRunner._.RunonMainThread(() =>
                 {
@@ -43,11 +43,11 @@ namespace Assets.UnityBindings
                     {
                         childs[i]?.Dispose();
                     }
-                    childs = new EntityConnect[RenderingComponent.ArmatureEntitys.Count];
+                    childs = new EntityConnect[LinkedComp.ArmatureEntitys.Count];
                     for (int i = 0; i < childs.Length; i++)
                     {
-                        var target = RenderingComponent.ArmatureEntitys[i].Target;
-                        childs[i] = new EntityConnect(gameObject.transform, target,RenderingComponent.Entity);
+                        var target = LinkedComp.ArmatureEntitys[i].Target;
+                        childs[i] = new EntityConnect(gameObject.transform, target, LinkedComp.Entity);
                     }
                     ChildrenReload?.Invoke();
                 });

@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Assets.UnityBindings
 {
-    public abstract class WorldPositionLinked<T, T2, T3> : WorldPositionLinked<T, T2> where T : RenderingComponent, new() where T2 : UnityEngine.Component where T3 : UnityEngine.Component
+    public abstract class WorldPositionLinked<T, T2, T3> : WorldPositionLinked<T, T2> where T : LinkedWorldComponent, new() where T2 : UnityEngine.Component where T3 : UnityEngine.Component
     {
         public T3 UnityComponent2;
 
@@ -22,7 +22,7 @@ namespace Assets.UnityBindings
         }
     }
 
-    public abstract class WorldPositionLinked<T, T2>:WorldPositionLinked<T> where T : RenderingComponent, new() where T2 : UnityEngine.Component
+    public abstract class WorldPositionLinked<T, T2>:WorldPositionLinked<T> where T : LinkedWorldComponent, new() where T2 : UnityEngine.Component
     {
         public T2 UnityComponent;
 
@@ -35,7 +35,7 @@ namespace Assets.UnityBindings
     }
 
 
-    public abstract class WorldPositionLinked<T> : RenderLinkBase<T> where T : RenderingComponent, new() 
+    public abstract class WorldPositionLinked<T> : EngineWorldLinkBase<T> where T : LinkedWorldComponent, new() 
     {
         public GameObject gameObject;
 
@@ -48,7 +48,7 @@ namespace Assets.UnityBindings
             {
                 gameObject = new GameObject(ObjectName);
                 gameObject.transform.parent = EngineRunner._.Root.transform;
-                RenderingComponent.Entity.GlobalTransformChange += Entity_GlobalTransformChange;
+                LinkedComp.Entity.GlobalTransformChange += Entity_GlobalTransformChange;
                 StartContinueInit();
                 UpdatePosThisFrame = true;
             });
@@ -90,7 +90,7 @@ namespace Assets.UnityBindings
         {
             if (UpdatePosThisFrame)
             {
-                EntityHelpers.SetPosFromEntity(gameObject.transform, RenderingComponent.Entity);
+                EntityHelpers.SetPosFromEntity(gameObject.transform, LinkedComp.Entity);
                 UpdatePosThisFrame = false;
             }
         }

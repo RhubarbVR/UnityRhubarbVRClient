@@ -18,31 +18,6 @@ using B83.Win32;
 public class EngineRunner : MonoBehaviour
 {
 
-    public GameObject TouchCanvas;
-
-    public FixedJoystick Left;
-
-    public FixedJoystick Right;
-
-    public void ClickScreen()
-    {
-        RInput.ingectedkeys.Add(Key.MouseRight, new RInput.InjectKey(true, true));
-        RWorld.ExecuteOnEndOfFrame(() =>
-        {
-            RInput.ingectedkeys.Remove(Key.MouseRight);
-        });
-    }
-    public void DashOpen()
-    {
-        RInput.ingectedkeys.Add(Key.Ctrl, new RInput.InjectKey(true, true));
-        RInput.ingectedkeys.Add(Key.Space, new RInput.InjectKey(true, true));
-        RWorld.ExecuteOnEndOfFrame(() =>
-        {
-            RInput.ingectedkeys.Remove(Key.Ctrl);
-            RInput.ingectedkeys.Remove(Key.Space);
-        });
-    }
-
     [ThreadStatic]
     public static bool IsMainThread = false;
 
@@ -220,14 +195,6 @@ public class EngineRunner : MonoBehaviour
         {
             Debug.Log("Is on Android");
             ChangeVR(true);
-            if (isInVR)
-            {
-                Destroy(TouchCanvas);
-            }
-        }
-        else
-        {
-            Destroy(TouchCanvas);
         }
         if (Assimp.AssimpUnity.IsAssimpAvailable)
         {
@@ -315,7 +282,7 @@ public class EngineRunner : MonoBehaviour
     }
 
 
-    public void Draw(string id, Mesh mesh, Material target, Matrix p, RenderLayer layer)
+    public void Draw(Mesh mesh, Material target, Matrix p, RenderLayer layer)
     {
         if (target is null)
         {
@@ -393,9 +360,6 @@ public class EngineRunner : MonoBehaviour
         {
             return;
         }
-        var calculatedDelta = UnityEngine.InputSystem.Mouse.current.delta.ReadValue();
-        calculatedDelta += new Vector2(Right.Vertical, Right.Horizontal);
-        MouseDelta = new Vector2f(calculatedDelta.x * speedMultply, calculatedDelta.y * -speedMultply);
         engine.Step();
     }
 }

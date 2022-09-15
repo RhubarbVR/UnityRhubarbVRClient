@@ -14,32 +14,32 @@ namespace Assets.UnityBindings
     public class UnityMeshRender : WorldPositionLinked<MeshRender,MeshRenderer,MeshFilter>, IUnityMeshRender
     {
 
-        public MeshRender MeshRender => RenderingComponent;
+        public MeshRender MeshRender => LinkedComp;
 
         public override string ObjectName => "MeshRender";
 
         public override void ContInit()
         {
-            RenderingComponent.materials.Changed += Materials_Changed;
-            RenderingComponent.colorLinear.Changed += Materials_Changed;
-            RenderingComponent.OrderOffset.Changed += Materials_Changed;
-            RenderingComponent.mesh.LoadChange += Mesh_LoadChange;
-            RenderingComponent.renderLayer.Changed += RenderLayer_Changed;
-            UnityComponent.renderingLayerMask = (uint)RenderingComponent.renderLayer.Value;
-            RenderingComponent.CastShadows.Changed += CastShadows_Changed;
-            UnityComponent.shadowCastingMode = RenderingComponent.CastShadows.Value switch
+            LinkedComp.materials.Changed += Materials_Changed;
+            LinkedComp.colorLinear.Changed += Materials_Changed;
+            LinkedComp.OrderOffset.Changed += Materials_Changed;
+            LinkedComp.mesh.LoadChange += Mesh_LoadChange;
+            LinkedComp.renderLayer.Changed += RenderLayer_Changed;
+            UnityComponent.renderingLayerMask = (uint)LinkedComp.renderLayer.Value;
+            LinkedComp.CastShadows.Changed += CastShadows_Changed;
+            UnityComponent.shadowCastingMode = LinkedComp.CastShadows.Value switch
             {
                 ShadowCast.On => UnityEngine.Rendering.ShadowCastingMode.On,
                 ShadowCast.TwoSided => UnityEngine.Rendering.ShadowCastingMode.TwoSided,
                 ShadowCast.ShadowsOnly => UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly,
                 _ => UnityEngine.Rendering.ShadowCastingMode.Off,
             };
-            RenderingComponent.RecevieShadows.Changed += RecevieShadows_Changed;
-            UnityComponent.receiveShadows = RenderingComponent.RecevieShadows;
-            RenderingComponent.ReflectionProbs.Changed += ReflectionProbs_Changed;
-            UnityComponent.reflectionProbeUsage = (RenderingComponent.ReflectionProbs.Value) ? UnityEngine.Rendering.ReflectionProbeUsage.Off : UnityEngine.Rendering.ReflectionProbeUsage.BlendProbes;
-            RenderingComponent.LightProbs.Changed += LightProbs_Changed;
-            UnityComponent.lightProbeUsage = (RenderingComponent.LightProbs.Value) ? UnityEngine.Rendering.LightProbeUsage.Off : UnityEngine.Rendering.LightProbeUsage.BlendProbes;
+            LinkedComp.RecevieShadows.Changed += RecevieShadows_Changed;
+            UnityComponent.receiveShadows = LinkedComp.RecevieShadows;
+            LinkedComp.ReflectionProbs.Changed += ReflectionProbs_Changed;
+            UnityComponent.reflectionProbeUsage = (LinkedComp.ReflectionProbs.Value) ? UnityEngine.Rendering.ReflectionProbeUsage.Off : UnityEngine.Rendering.ReflectionProbeUsage.BlendProbes;
+            LinkedComp.LightProbs.Changed += LightProbs_Changed;
+            UnityComponent.lightProbeUsage = (LinkedComp.LightProbs.Value) ? UnityEngine.Rendering.LightProbeUsage.Off : UnityEngine.Rendering.LightProbeUsage.BlendProbes;
             Materials_Changed(null);
         }
 
@@ -47,7 +47,7 @@ namespace Assets.UnityBindings
         {
             EngineRunner._.RunonMainThread(() =>
             {
-                UnityComponent.lightProbeUsage = (RenderingComponent.LightProbs.Value) ? UnityEngine.Rendering.LightProbeUsage.Off : UnityEngine.Rendering.LightProbeUsage.BlendProbes;
+                UnityComponent.lightProbeUsage = (LinkedComp.LightProbs.Value) ? UnityEngine.Rendering.LightProbeUsage.Off : UnityEngine.Rendering.LightProbeUsage.BlendProbes;
             });
         }
 
@@ -55,7 +55,7 @@ namespace Assets.UnityBindings
         {
             EngineRunner._.RunonMainThread(() =>
             {
-                UnityComponent.reflectionProbeUsage = (RenderingComponent.ReflectionProbs.Value) ? UnityEngine.Rendering.ReflectionProbeUsage.Off : UnityEngine.Rendering.ReflectionProbeUsage.BlendProbes;
+                UnityComponent.reflectionProbeUsage = (LinkedComp.ReflectionProbs.Value) ? UnityEngine.Rendering.ReflectionProbeUsage.Off : UnityEngine.Rendering.ReflectionProbeUsage.BlendProbes;
             });
         }
 
@@ -63,7 +63,7 @@ namespace Assets.UnityBindings
         {
             EngineRunner._.RunonMainThread(() =>
             {
-                UnityComponent.receiveShadows = RenderingComponent.RecevieShadows;
+                UnityComponent.receiveShadows = LinkedComp.RecevieShadows;
             });
         }
 
@@ -71,7 +71,7 @@ namespace Assets.UnityBindings
         {
             EngineRunner._.RunonMainThread(() =>
             {
-                UnityComponent.shadowCastingMode = RenderingComponent.CastShadows.Value switch
+                UnityComponent.shadowCastingMode = LinkedComp.CastShadows.Value switch
                 {
                     ShadowCast.On => UnityEngine.Rendering.ShadowCastingMode.On,
                     ShadowCast.TwoSided => UnityEngine.Rendering.ShadowCastingMode.TwoSided,
@@ -85,7 +85,7 @@ namespace Assets.UnityBindings
         {
             EngineRunner._.RunonMainThread(() =>
             {
-                UnityComponent.renderingLayerMask = (uint)RenderingComponent.renderLayer.Value;
+                UnityComponent.renderingLayerMask = (uint)LinkedComp.renderLayer.Value;
             });
         }
 
@@ -99,7 +99,7 @@ namespace Assets.UnityBindings
                 }
                 else
                 {
-                    ((UnityMeshHolder)obj.mesh).LoadIn((mesh) => {
+                    ((UnityMeshHolder)obj.Inst).LoadIn((mesh) => {
                         UnityComponent2.mesh = mesh;
                     });
                 }
@@ -110,7 +110,7 @@ namespace Assets.UnityBindings
 
         public void ReloadMitsToMaterial()
         {
-            RWorld.ExecuteOnEndOfFrame(this, () =>
+            RUpdateManager.ExecuteOnEndOfFrame(this, () =>
             {
                 var unitymits = new Material[BoundMits.Length];
                 for (int i = 0; i < BoundMits.Length; i++)
@@ -136,10 +136,10 @@ namespace Assets.UnityBindings
                 {
                     BoundMits[i]?.Dispose();
                 }
-                BoundMits = new MatManager[RenderingComponent.materials.Count];
-                for (int i = 0; i < RenderingComponent.materials.Count; i++)
+                BoundMits = new MatManager[LinkedComp.materials.Count];
+                for (int i = 0; i < LinkedComp.materials.Count; i++)
                 {
-                    BoundMits[i] = new MatManager(RenderingComponent.materials[i], this);
+                    BoundMits[i] = new MatManager(LinkedComp.materials[i], this);
                 }
             });
         }

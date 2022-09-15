@@ -6,6 +6,7 @@ using RhuEngine.Linker;
 using System;
 using RhuEngine.Physics;
 using TextCopy;
+using RhuEngine.Managers;
 
 public class UnityEngineLink : IEngineLink
 {
@@ -74,10 +75,9 @@ public class UnityEngineLink : IEngineLink
         RMaterial.Instance = new UnityMaterial(EngineRunner);
         RMaterial.ConstInstance = new UnityMitStatics();
         RShader.Instance = new UnityShader(EngineRunner);
-        RMesh.Instance = new UnityMesh(EngineRunner);
+        RMesh.Instance = typeof(UnityMesh);
         RRenderer.Instance = new UnityRenderer(EngineRunner);
         RTime.Instance = new UnityTime();
-        RInput.Instance = new UnityInput(EngineRunner);
         StaticMaterialManager.Instanances = new UnitStaticMits(EngineRunner);
         //Use bypass to load libs
         new RBullet.BulletPhsyicsLink(true).RegisterPhysics();
@@ -103,5 +103,9 @@ public class UnityEngineLink : IEngineLink
             EngineRunner.ChangeVR(false);
             EngineRunner.ChangeVR(true);
         }
+    }
+
+    public void LoadInput(InputManager manager)
+    {
     }
 }

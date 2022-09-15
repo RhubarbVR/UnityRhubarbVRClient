@@ -201,56 +201,6 @@ public static class BoneWeightAddons
 
 public class UnityMesh : IRMesh
 {
-    public static UnityMeshHolder MakeQuad()
-    {
-        Mesh mesh = new();
-
-        Vector3[] vertices = new Vector3[4]
-        {
-            new Vector3(-0.5f,-0.5f,0),
-            new Vector3(0.5f,-0.5f,0),
-            new Vector3(0.5f, 0.5f,0),
-            new Vector3(-0.5f, 0.5f,0)
-        };
-        mesh.vertices = vertices;
-
-        int[] tris = new int[6]
-        {
-            2, 1, 0,
-            3, 2, 0
-        };
-        mesh.triangles = tris;
-
-        Vector3[] normals = new Vector3[4]
-        {
-            -Vector3.forward,
-            -Vector3.forward,
-            -Vector3.forward,
-            -Vector3.forward
-        };
-        mesh.normals = normals;
-
-        Vector2[] uv = new Vector2[4]
-        {
-            new Vector2(1, 1),
-            new Vector2(0, 1),
-            new Vector2(0, 0),
-            new Vector2(1, 0)
-        };
-        mesh.uv = uv;
-        return new UnityMeshHolder(EngineRunner._, mesh);
-    }
-
-    public UnityMeshHolder LoadedQuad = MakeQuad();
-
-    public RMesh Quad => new(LoadedQuad,false);
-
-    public EngineRunner EngineRunner { get; }
-
-    public void Draw(string id, object mesh, RMaterial loadingLogo, Matrix p, Colorf tint, int gueu, RenderLayer layer)
-    {
-        EngineRunner.Draw(id, ((UnityMeshHolder)mesh).mesh, MitManager.GetMitWithOffset(loadingLogo, gueu, tint).material, p, layer);
-    }
     static ulong MeshCount = 0;
     public static ulong NextValue()
     {
@@ -556,21 +506,22 @@ public class UnityMesh : IRMesh
         }
     }
 
-    public void LoadMesh(RMesh meshtarget, IMesh rmesh)
+
+    public void LoadMeshData(IMesh rmesh)
     {
-        if (meshtarget.mesh is not null)
+        if (unityMeshHolder is not null)
         {
-            ((UnityMeshHolder)meshtarget.mesh).Action((mesh) =>
+            unityMeshHolder.Action((mesh) =>
             {
                 MeshLoadAction(mesh, rmesh);
             });
         }
         else
         {
-            meshtarget.mesh = new UnityMeshHolder(EngineRunner, () =>
+            unityMeshHolder = new UnityMeshHolder(EngineRunner._, () =>
             {
                 var mesh = new Mesh();
-                if (meshtarget.Dynamic)
+                if (rMesh1.Dynamic)
                 {
                     mesh.MarkDynamic();
                 }
@@ -580,8 +531,20 @@ public class UnityMesh : IRMesh
         }
     }
 
-    public UnityMesh(EngineRunner engineRunner)
+    public void LoadMeshToRender()
     {
-        EngineRunner = engineRunner;
     }
+
+    private UnityMeshHolder unityMeshHolder;
+
+    public void Draw(RMaterial loadingLogo, Matrix p, Colorf tint, int zDepth, RenderLayer layer, int submesh)
+    {
+        EngineRunner._.Draw(unityMeshHolder.mesh, MitManager.GetMitWithOffset(loadingLogo, zDepth, tint).material, p, layer);
+    }
+    RMesh rMesh1;
+    public void Init(RMesh rMesh)
+    {
+        rMesh1 = rMesh;
+    }
+
 }
