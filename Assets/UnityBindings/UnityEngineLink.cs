@@ -66,6 +66,45 @@ public class UnityEngineLink : IEngineLink
     {
         EngineRunner.ChangeVR(value);
     }
+    public static UnityMeshHolder MakeQuad()
+    {
+        Mesh mesh = new();
+
+        Vector3[] vertices = new Vector3[4]
+        {
+            new Vector3(-0.5f,-0.5f,0),
+            new Vector3(0.5f,-0.5f,0),
+            new Vector3(0.5f, 0.5f,0),
+            new Vector3(-0.5f, 0.5f,0)
+        };
+        mesh.vertices = vertices;
+
+        int[] tris = new int[6]
+        {
+            2, 1, 0,
+            3, 2, 0
+        };
+        mesh.triangles = tris;
+
+        Vector3[] normals = new Vector3[4]
+        {
+            -Vector3.forward,
+            -Vector3.forward,
+            -Vector3.forward,
+            -Vector3.forward
+        };
+        mesh.normals = normals;
+
+        Vector2[] uv = new Vector2[4]
+        {
+            new Vector2(1, 1),
+            new Vector2(0, 1),
+            new Vector2(0, 0),
+            new Vector2(1, 0)
+        };
+        mesh.uv = uv;
+        return new UnityMeshHolder(EngineRunner._, mesh);
+    }
 
     public void LoadStatics()
     {
@@ -79,6 +118,7 @@ public class UnityEngineLink : IEngineLink
         RRenderer.Instance = new UnityRenderer(EngineRunner);
         RTime.Instance = new UnityTime();
         StaticMaterialManager.Instanances = new UnitStaticMits(EngineRunner);
+        RenderThread.ExecuteOnStartOfFrame(() => RMesh.Quad = new RMesh(new UnityMesh(MakeQuad()), false));
         //Use bypass to load libs
         new RBullet.BulletPhsyicsLink(true).RegisterPhysics();
     }

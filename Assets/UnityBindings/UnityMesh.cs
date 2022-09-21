@@ -546,5 +546,13 @@ public class UnityMesh : IRMesh
     {
         rMesh1 = rMesh;
     }
+    public UnityMesh(UnityMeshHolder unityMeshHolder)
+    {
+        this.unityMeshHolder = unityMeshHolder;
+    }
 
+    public UnityMesh()
+    {
+
+    }
 }
