@@ -99,7 +99,7 @@ namespace Assets.UnityBindings
                 }
                 else
                 {
-                    ((UnityMeshHolder)obj.Inst).LoadIn((mesh) => {
+                    ((UnityMesh)obj.Inst).unityMeshHolder.LoadIn((mesh) => {
                         UnityComponent2.mesh = mesh;
                     });
                 }

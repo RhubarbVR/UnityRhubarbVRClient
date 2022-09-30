@@ -190,7 +190,7 @@ namespace Assets.UnityBindings
                 }
                 else
                 {
-                    ((UnityMeshHolder)obj.Inst).LoadIn((mesh) =>
+                    ((UnityMesh)obj.Inst).unityMeshHolder.LoadIn((mesh) =>
                     {
                         UnityComponent.sharedMesh = (Mesh)mesh;
                         UnitySkinnedMeshRender_ChildrenReload();

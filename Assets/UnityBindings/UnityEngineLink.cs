@@ -118,7 +118,7 @@ public class UnityEngineLink : IEngineLink
         RRenderer.Instance = new UnityRenderer(EngineRunner);
         RTime.Instance = new UnityTime();
         StaticMaterialManager.Instanances = new UnitStaticMits(EngineRunner);
-        RenderThread.ExecuteOnStartOfFrame(() => RMesh.Quad = new RMesh(new UnityMesh(MakeQuad()), false));
+        RMesh.Quad = new RMesh(new UnityMesh(MakeQuad()), false);
         //Use bypass to load libs
         new RBullet.BulletPhsyicsLink(true).RegisterPhysics();
     }

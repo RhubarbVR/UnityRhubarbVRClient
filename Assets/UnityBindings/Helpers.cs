@@ -13,14 +13,21 @@ namespace Assets
     {
         public static void SetPosFromEntity(Transform transform, Entity entity, Entity reletive = null)
         {
-            Matrix m;
+            Matrix m = Matrix.Identity;
             if (reletive is not null)
             {
-                m = reletive.GlobalToLocal(entity.GlobalTrans);
+                if (entity.Depth <= 100)
+                {
+                    m = reletive.GlobalToLocal(entity.GlobalTrans);
+                }
             }
             else
             {
-                m = entity.GlobalTrans;
+                if (entity.Depth <= 100)
+                {
+                    m = entity.GlobalTrans;
+                }
+
             };
             var pos = m.Translation;
             var rot = m.Rotation;

@@ -7,6 +7,7 @@ using System;
 using RNumerics;
 using System.Linq;
 using System.Threading.Tasks;
+using static UnityEditor.Progress;
 
 public static class MitManager
 {
@@ -210,240 +211,6 @@ public class UnityMesh : IRMesh
         }
     }
 
-
-    public void MeshLoadAction(Mesh unityMesh, IMesh rmesh)
-    {
-        try
-        {
-            Mesh mesh = unityMesh;
-            mesh.Clear();
-            if (rmesh is null)
-            {
-                return;
-            }
-            if (rmesh.VertexCount == 0)
-            {
-                return;
-            }
-            if (rmesh is IComplexMesh complexMesh)
-            {
-                var cvertices = new Vector3[complexMesh.Vertices.Count];
-                for (int i = 0; i < complexMesh.Vertices.Count; i++)
-                {
-                    cvertices[i] = new Vector3(complexMesh.Vertices[i].x, complexMesh.Vertices[i].y, complexMesh.Vertices[i].z);
-                }
-                var cnormals = new Vector3[complexMesh.Normals.Count];
-                for (int i = 0; i < complexMesh.Normals.Count; i++)
-                {
-                    cnormals[i] = new Vector3(complexMesh.Normals[i].x, complexMesh.Normals[i].y, complexMesh.Normals[i].z);
-                }
-                var ctangents = new Vector4[complexMesh.Tangents.Count];
-                for (int i = 0; i < complexMesh.Tangents.Count; i++)
-                {
-                    var tangent = complexMesh.Tangents[i];
-                    var crossnt = complexMesh.Normals[i].Cross(tangent);
-                    ctangents[i] = new Vector4(tangent.x, tangent.y, tangent.z, (crossnt.Dot(complexMesh.BiTangents[i]) <= 0f) ? 1 : (-1));
-                }
-                var cuv = new List<Vector3>[complexMesh.TexCoords.Length];
-                for (int i = 0; i < complexMesh.TexCoords.Length; i++)
-                {
-                    cuv[i] = new List<Vector3>(complexMesh.TexCoords[i].Count);
-                    for (int x = 0; x < complexMesh.TexCoords[i].Count; x++)
-                    {
-                        cuv[i].Add(new Vector3(complexMesh.TexCoords[i][x].x, 1f - complexMesh.TexCoords[i][x].y, complexMesh.TexCoords[i][x].z));
-                    }
-                }
-                var colorAmount = 0;
-                if (complexMesh.Colors.Length > 0)
-                {
-                    colorAmount = complexMesh.Colors[0].Count;
-                }
-                var ccolors = new Color[colorAmount];
-                if (complexMesh.Colors.Length > 0)
-                {
-                    Parallel.For(0, complexMesh.Colors[0].Count, (i) =>
-                    {
-                        ccolors[i] = new Color(complexMesh.Colors[0][i].r, complexMesh.Colors[0][i].g, complexMesh.Colors[0][i].b, complexMesh.Colors[0][i].a);
-                    });
-                }
-                mesh.name = "Complex Mesh:" + complexMesh.MeshName;
-                mesh.SetVertices(cvertices);
-                mesh.SetTangents(ctangents);
-                mesh.SetNormals(cnormals);
-                for (int i = 0; i < cuv.Length; i++)
-                {
-                    mesh.SetUVs(i, cuv[i]);
-                }
-                mesh.SetColors(ccolors);
-                if (complexMesh.HasBones)
-                {
-                    var BoneVertexWights = new BoneWeight[complexMesh.VertexCount];
-                    var bonePoses = new Matrix4x4[complexMesh.BonesCount];
-                    var BoneIndex = 0;
-                    foreach (var Bone in complexMesh.Bones)
-                    {
-                        //bonePoses[BoneIndex] = Matrix4x4.identity;
-                        bonePoses[BoneIndex] = new Matrix4x4
-                        {
-                            m00 = Bone.OffsetMatrix.m.M11,
-                            m01 = Bone.OffsetMatrix.m.M12,
-                            m02 = Bone.OffsetMatrix.m.M13,
-                            m03 = Bone.OffsetMatrix.m.M14,
-                            m10 = Bone.OffsetMatrix.m.M21,
-                            m11 = Bone.OffsetMatrix.m.M22,
-                            m12 = Bone.OffsetMatrix.m.M23,
-                            m13 = Bone.OffsetMatrix.m.M24,
-                            m20 = Bone.OffsetMatrix.m.M31,
-                            m21 = Bone.OffsetMatrix.m.M32,
-                            m22 = Bone.OffsetMatrix.m.M33,
-                            m23 = Bone.OffsetMatrix.m.M34,
-                            m30 = Bone.OffsetMatrix.m.M41,
-                            m31 = Bone.OffsetMatrix.m.M42,
-                            m32 = Bone.OffsetMatrix.m.M43,
-                            m33 = Bone.OffsetMatrix.m.M44
-                        };
-                        foreach (var vertexWe in Bone.VertexWeights)
-                        {
-                            BoneVertexWights[vertexWe.VertexID].AddBone(BoneIndex, vertexWe.Weight);
-                        }
-                        BoneIndex++;
-                    }
-                    for (int i = 0; i < BoneVertexWights.Length; i++)
-                    {
-                        BoneVertexWights[i].Normalize();
-                    }
-                    mesh.boneWeights = BoneVertexWights;
-                    mesh.bindposes = bonePoses;
-                }
-                if (complexMesh.HasMeshAttachments)
-                {
-                    mesh.ClearBlendShapes();
-                    foreach (var item in complexMesh.MeshAttachments)
-                    {
-                        try
-                        {
-                            var svertices = new Vector3[complexMesh.VertexCount];
-                            var smallist = Math.Min(item.Vertices.Count, complexMesh.VertexCount);
-                            for (int i = 0; i < smallist; i++)
-                            {
-                                svertices[i] = new Vector3(item.Vertices[i].x, item.Vertices[i].y, item.Vertices[i].z) - cvertices[i];
-                            }
-                            var snormals = new Vector3[complexMesh.VertexCount];
-                            var smallistnorm = Math.Min(item.Normals.Count, complexMesh.VertexCount);
-                            for (int i = 0; i < smallistnorm; i++)
-                            {
-                                snormals[i] = new Vector3(item.Normals[i].x, item.Normals[i].y, item.Normals[i].z) - cnormals[i];
-                            }
-                            var stangents = new Vector3[complexMesh.VertexCount];
-                            var smallitsTang = Math.Min(complexMesh.Tangents.Count, complexMesh.VertexCount);
-                            for (int i = 0; i < smallitsTang; i++)
-                            {
-                                var tangent = item.Tangents[i];
-                                stangents[i] = new Vector3(tangent.x - ctangents[i].x, tangent.y - ctangents[i].y, tangent.z - ctangents[i].z);
-                            }
-                            mesh.AddBlendShapeFrame(item.Name, item.Weight, svertices, snormals, stangents);
-                        }
-                        catch { }
-                    }
-                }
-                if (cvertices.Length > (ushort.MaxValue))
-                {
-                    mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-                }
-                else
-                {
-                    mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt16;
-                }
-                mesh.subMeshCount = complexMesh.SubMeshes.Count() + 1;
-                LoadSubMesh(mesh, complexMesh.PrimitiveType, complexMesh.Faces, 0);
-                var currentIndex = 0;
-                foreach (var item in complexMesh.SubMeshes)
-                {
-                    currentIndex++;
-                    LoadSubMesh(mesh, item.PrimitiveType, item.Faces, currentIndex);
-                }
-                return;
-            }
-
-            if (!rmesh.IsTriangleMesh)
-            {
-                RLog.Err("Unity can only render Triangle Meshes When basic");
-                return;
-            }
-            var vertices = new Vector3[rmesh.VertexCount];
-            var normals = new Vector3[rmesh.VertexCount];
-            var uv = new Vector2[rmesh.VertexCount];
-            var colors = new Color[rmesh.VertexCount];
-
-            Parallel.For(0, rmesh.VertexCount, (i) =>
-            {
-
-                var vert = rmesh.GetVertexAll(i);
-                vertices[i] = new Vector3((float)vert.v.x, (float)vert.v.y, (float)vert.v.z);
-                normals[i] = new Vector3(vert.n.x, vert.n.y, vert.n.z);
-                if (vert.bHaveUV && ((vert.uv?.Length ?? 0) > 0))
-                {
-                    uv[i] = new Vector2(vert.uv[0].x, vert.uv[0].y);
-                }
-                if (vert.bHaveC)
-                {
-                    colors[i] = new Color(vert.c.x, vert.c.y, vert.c.z, 1f);
-                }
-                else
-                {
-                    colors[i] = new Color(1f, 1f, 1f, 1f);
-                }
-            });
-
-            mesh.SetVertices(vertices);
-
-            mesh.SetNormals(normals);
-
-            mesh.SetUVs(0, uv);
-
-            mesh.SetColors(colors);
-            if (vertices.Length > (ushort.MaxValue - 10))
-            {
-                mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-            }
-            else
-            {
-                mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt16;
-            }
-            mesh.SetTriangles(rmesh.RenderIndices().ToArray(), 0);
-
-            mesh.RecalculateBounds();
-        }
-        catch (Exception ex)
-        {
-            RLog.Err($"Mesh Update Failed Error:{ex}");
-        }
-    }
-
-    private void LoadSubMesh(Mesh mesh, RPrimitiveType primitiveType, IEnumerable<IFace> faces,int index)
-    {
-        var indexs = LoadIndexs(primitiveType,faces).ToArray();
-        switch (primitiveType)
-        {
-            case RPrimitiveType.Point:
-                mesh.SetIndices(indexs, MeshTopology.Points, index);
-                break;
-            case RPrimitiveType.Line:
-                mesh.SetIndices(indexs, MeshTopology.Lines, index);
-                break;
-            case RPrimitiveType.Triangle:
-                mesh.SetIndices(indexs, MeshTopology.Triangles, index);
-                break;
-            case RPrimitiveType.Polygon:
-                mesh.SetIndices(indexs, MeshTopology.Quads, index);
-                break;
-            default:
-                break;
-        }
-        RLog.Info($"Loaded SubMesh PrimitiveType{primitiveType} {index}");
-
-    }
-
     private IEnumerable<int> LoadIndexs(RPrimitiveType primitiveType, IEnumerable<IFace> faces)
     {
         foreach (var item in faces)
@@ -460,7 +227,7 @@ public class UnityMesh : IRMesh
                     int? lastPoint = null;
                     foreach (var point in item.Indices)
                     {
-                        if(lastPoint is not null)
+                        if (lastPoint is not null)
                         {
                             yield return (int)lastPoint;
                         }
@@ -507,35 +274,279 @@ public class UnityMesh : IRMesh
     }
 
 
+    public string Name;
+
+    public Vector3[] cvertices;
+
+    public Vector3[] cnormals;
+    public Vector4[] ctangents;
+    public Color[] ccolors;
+    public List<Vector3>[] cuv;
+
+    public BoneWeight[] BoneVertexWights;
+    public Matrix4x4[] bonePoses;
+
+    public BlendShapeFrame[] blendShapeFrames;
+
+    public struct BlendShapeFrame
+    {
+        public string name;
+        public float wight;
+        public Vector3[] vertices;
+        public Vector3[] normals;
+        public Vector3[] tangents;
+    }
+
+    public int[][] Faces;
+    public MeshTopology[] PrimitiveTypes;
+
     public void LoadMeshData(IMesh rmesh)
     {
-        if (unityMeshHolder is not null)
+        try
         {
-            unityMeshHolder.Action((mesh) =>
+            Name = Guid.NewGuid().ToString();
+            cvertices = Array.Empty<Vector3>();
+            cnormals = Array.Empty<Vector3>();
+            ctangents = Array.Empty<Vector4>();
+            ccolors = Array.Empty<Color>();
+            cuv = Array.Empty<List<Vector3>>();
+            blendShapeFrames = Array.Empty<BlendShapeFrame>();
+            Faces = Array.Empty<int[]>();
+            PrimitiveTypes = Array.Empty<MeshTopology>();
+            if (rmesh is null)
             {
-                MeshLoadAction(mesh, rmesh);
-            });
-        }
-        else
-        {
-            unityMeshHolder = new UnityMeshHolder(EngineRunner._, () =>
+                return;
+            }
+            if (rmesh.VertexCount == 0)
             {
-                var mesh = new Mesh();
-                if (rMesh1.Dynamic)
+                return;
+            }
+            if (rmesh is IComplexMesh complexMesh)
+            {
+                cvertices = new Vector3[complexMesh.Vertices.Count];
+                for (int i = 0; i < complexMesh.Vertices.Count; i++)
                 {
-                    mesh.MarkDynamic();
+                    cvertices[i] = new Vector3(complexMesh.Vertices[i].x, complexMesh.Vertices[i].y, complexMesh.Vertices[i].z);
                 }
-                MeshLoadAction(mesh, rmesh);
-                return mesh;
-            });
+                cnormals = new Vector3[complexMesh.Normals.Count];
+                for (int i = 0; i < complexMesh.Normals.Count; i++)
+                {
+                    cnormals[i] = new Vector3(complexMesh.Normals[i].x, complexMesh.Normals[i].y, complexMesh.Normals[i].z);
+                }
+                ctangents = new Vector4[complexMesh.Tangents.Count];
+                for (int i = 0; i < complexMesh.Tangents.Count; i++)
+                {
+                    var tangent = complexMesh.Tangents[i];
+                    var crossnt = complexMesh.Normals[i].Cross(tangent);
+                    ctangents[i] = new Vector4(tangent.x, tangent.y, tangent.z, (crossnt.Dot(complexMesh.BiTangents[i]) <= 0f) ? 1 : (-1));
+                }
+                cuv = new List<Vector3>[complexMesh.TexCoords.Length];
+                for (int i = 0; i < complexMesh.TexCoords.Length; i++)
+                {
+                    cuv[i] = new List<Vector3>(complexMesh.TexCoords[i].Count);
+                    for (int x = 0; x < complexMesh.TexCoords[i].Count; x++)
+                    {
+                        cuv[i].Add(new Vector3(complexMesh.TexCoords[i][x].x, 1f - complexMesh.TexCoords[i][x].y, complexMesh.TexCoords[i][x].z));
+                    }
+                }
+                var colorAmount = 0;
+                if (complexMesh.Colors.Length > 0)
+                {
+                    colorAmount = complexMesh.Colors[0].Count;
+                }
+                ccolors = new Color[colorAmount];
+                if (complexMesh.Colors.Length > 0)
+                {
+                    Parallel.For(0, complexMesh.Colors[0].Count, (i) =>
+                    {
+                        ccolors[i] = new Color(complexMesh.Colors[0][i].r, complexMesh.Colors[0][i].g, complexMesh.Colors[0][i].b, complexMesh.Colors[0][i].a);
+                    });
+                }
+                Name = "Complex Mesh:" + complexMesh.MeshName;
+                if (complexMesh.HasBones)
+                {
+                    BoneVertexWights = new BoneWeight[complexMesh.VertexCount];
+                    bonePoses = new Matrix4x4[complexMesh.BonesCount];
+                    var BoneIndex = 0;
+                    foreach (var Bone in complexMesh.Bones)
+                    {
+                        //bonePoses[BoneIndex] = Matrix4x4.identity;
+                        bonePoses[BoneIndex] = new Matrix4x4
+                        {
+                            m00 = Bone.OffsetMatrix.m.M11,
+                            m01 = Bone.OffsetMatrix.m.M12,
+                            m02 = Bone.OffsetMatrix.m.M13,
+                            m03 = Bone.OffsetMatrix.m.M14,
+                            m10 = Bone.OffsetMatrix.m.M21,
+                            m11 = Bone.OffsetMatrix.m.M22,
+                            m12 = Bone.OffsetMatrix.m.M23,
+                            m13 = Bone.OffsetMatrix.m.M24,
+                            m20 = Bone.OffsetMatrix.m.M31,
+                            m21 = Bone.OffsetMatrix.m.M32,
+                            m22 = Bone.OffsetMatrix.m.M33,
+                            m23 = Bone.OffsetMatrix.m.M34,
+                            m30 = Bone.OffsetMatrix.m.M41,
+                            m31 = Bone.OffsetMatrix.m.M42,
+                            m32 = Bone.OffsetMatrix.m.M43,
+                            m33 = Bone.OffsetMatrix.m.M44
+                        };
+                        foreach (var vertexWe in Bone.VertexWeights)
+                        {
+                            BoneVertexWights[vertexWe.VertexID].AddBone(BoneIndex, vertexWe.Weight);
+                        }
+                        BoneIndex++;
+                    }
+                    for (int i = 0; i < BoneVertexWights.Length; i++)
+                    {
+                        BoneVertexWights[i].Normalize();
+                    }
+                }
+                if (complexMesh.HasMeshAttachments)
+                {
+                    blendShapeFrames = new BlendShapeFrame[complexMesh.MeshAttachments.Count()];
+                    var current = 0;
+                    foreach (var item in complexMesh.MeshAttachments)
+                    {
+                        try
+                        {
+                            blendShapeFrames[current].vertices = new Vector3[complexMesh.VertexCount];
+                            var smallist = Math.Min(item.Vertices.Count, complexMesh.VertexCount);
+                            for (int i = 0; i < smallist; i++)
+                            {
+                                blendShapeFrames[current].vertices[i] = new Vector3(item.Vertices[i].x, item.Vertices[i].y, item.Vertices[i].z) - cvertices[i];
+                            }
+                            blendShapeFrames[current].normals = new Vector3[complexMesh.VertexCount];
+                            var smallistnorm = Math.Min(item.Normals.Count, complexMesh.VertexCount);
+                            for (int i = 0; i < smallistnorm; i++)
+                            {
+                                blendShapeFrames[current].normals[i] = new Vector3(item.Normals[i].x, item.Normals[i].y, item.Normals[i].z) - cnormals[i];
+                            }
+                            blendShapeFrames[current].tangents = new Vector3[complexMesh.VertexCount];
+                            var smallitsTang = Math.Min(complexMesh.Tangents.Count, complexMesh.VertexCount);
+                            for (int i = 0; i < smallitsTang; i++)
+                            {
+                                var tangent = item.Tangents[i];
+                                blendShapeFrames[current].tangents[i] = new Vector3(tangent.x - ctangents[i].x, tangent.y - ctangents[i].y, tangent.z - ctangents[i].z);
+                            }
+                            blendShapeFrames[current].name = item.Name;
+                            blendShapeFrames[current].wight = item.Weight;
+                            current++;
+                        }
+                        catch { }
+                    }
+                }
+
+                Faces = new int[complexMesh.SubMeshes.Count() + 1][];
+                Faces[0] = LoadIndexs(complexMesh.PrimitiveType, complexMesh.Faces).ToArray();
+                PrimitiveTypes[0] = ToUnityPrimitive(complexMesh.PrimitiveType);
+                var currentIndex = 0;
+                foreach (var item in complexMesh.SubMeshes)
+                {
+                    currentIndex++;
+                    Faces[currentIndex] = LoadIndexs(item.PrimitiveType, item.Faces).ToArray();
+                    PrimitiveTypes[currentIndex] = ToUnityPrimitive(item.PrimitiveType);
+                }
+                return;
+            }
+
+            if (!rmesh.IsTriangleMesh)
+            {
+                RLog.Err("Unity can only render Triangle Meshes When basic");
+                return;
+            }
+            cvertices = new Vector3[rmesh.VertexCount];
+            cnormals = new Vector3[rmesh.VertexCount];
+            ctangents = new Vector4[rmesh.VertexCount];
+            cuv = new List<Vector3>[1];
+            ccolors = new Color[rmesh.VertexCount];
+
+            for (int i = 0; i < rmesh.VertexCount; i++)
+            {
+                var vert = rmesh.GetVertexAll(i);
+                cvertices[i] = new Vector3((float)vert.v.x, (float)vert.v.y, (float)vert.v.z);
+                cnormals[i] = new Vector3(vert.n.x, vert.n.y, vert.n.z);
+                if (vert.bHaveUV && ((vert.uv?.Length ?? 0) > 0))
+                {
+                    cuv[0] ??= new List<Vector3>(rmesh.VertexCount);
+                    cuv[0].Add(new Vector3(vert.uv[0].x, vert.uv[0].y, 0));
+                }
+                else
+                {
+                    cuv[0] ??= new List<Vector3>(rmesh.VertexCount);
+                    cuv[0].Add(new Vector3(0, 0, 0));
+                }
+                if (vert.bHaveC)
+                {
+                    ccolors[i] = new Color(vert.c.x, vert.c.y, vert.c.z, 1f);
+                }
+                else
+                {
+                    ccolors[i] = new Color(1f, 1f, 1f, 1f);
+                }
+            }
+
+            Faces = new int[1][];
+            PrimitiveTypes = new MeshTopology[1];
+            Faces[0] = rmesh.RenderIndices().ToArray();
+            PrimitiveTypes[0] = MeshTopology.Triangles;
         }
+        catch (Exception ex)
+        {
+            RLog.Err($"Mesh Update Failed Error:{ex}");
+        }
+    }
+
+    private MeshTopology ToUnityPrimitive(RPrimitiveType primitiveType)
+    {
+        return primitiveType switch
+        {
+            RPrimitiveType.Point => MeshTopology.Points,
+            RPrimitiveType.Line => MeshTopology.Lines,
+            RPrimitiveType.Triangle => MeshTopology.Triangles,
+            RPrimitiveType.Polygon => MeshTopology.Quads,
+            _ => MeshTopology.LineStrip,
+        };
     }
 
     public void LoadMeshToRender()
     {
+        unityMeshHolder.Action((mesh) =>
+        {
+            mesh.name = Name;
+            mesh.Clear(false);
+            mesh.SetVertices(cvertices);
+            mesh.SetTangents(ctangents);
+            mesh.SetNormals(cnormals);
+            for (int i = 0; i < cuv.Length; i++)
+            {
+                mesh.SetUVs(i, cuv[i]);
+            }
+            mesh.SetColors(ccolors);
+            mesh.boneWeights = BoneVertexWights;
+            mesh.bindposes = bonePoses;
+            mesh.ClearBlendShapes();
+            foreach (var item in blendShapeFrames)
+            {
+                mesh.AddBlendShapeFrame(item.name,item.wight,item.vertices,item.normals,item.tangents);
+            }
+
+            if (cvertices.Length > (ushort.MaxValue))
+            {
+                mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+            }
+            else
+            {
+                mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt16;
+            }
+            mesh.subMeshCount = Faces.Length;
+            for (int i = 0; i < Faces.Length; i++)
+            {
+                mesh.SetIndices(Faces[i], PrimitiveTypes[i], i);
+            }
+        });
     }
 
-    private UnityMeshHolder unityMeshHolder;
+    public UnityMeshHolder unityMeshHolder;
 
     public void Draw(RMaterial loadingLogo, Matrix p, Colorf tint, int zDepth, RenderLayer layer, int submesh)
     {
@@ -545,6 +556,16 @@ public class UnityMesh : IRMesh
     public void Init(RMesh rMesh)
     {
         rMesh1 = rMesh;
+        unityMeshHolder = new UnityMeshHolder(EngineRunner._, () =>
+        {
+            var mesh = new Mesh();
+            mesh.name = Guid.NewGuid().ToString();
+            if (rMesh1.Dynamic)
+            {
+                mesh.MarkDynamic();
+            }
+            return mesh;
+        });
     }
     public UnityMesh(UnityMeshHolder unityMeshHolder)
     {
